@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "FuelCast",
+    "slug": "fuelcast",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "fuelcast",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0B0F14",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "org.gatsa.fuelcast"
+    },
+    "android": {
+      "package": "org.gatsa.fuelcast"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B0F14"
+        }
+      ]
+    ]
+  }
+}
