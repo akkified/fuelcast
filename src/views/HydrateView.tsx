@@ -7,7 +7,7 @@ import { bottlesFor, formatFluid, goalBreakdown, ML_PER_OZ, sweatTest, toKg, toM
 import { dateKey } from '@/engine/time';
 import { useNow, useStore } from '@/state/store';
 import { useDay } from '@/state/useDay';
-import { Button, Card, Row, Screen, SectionHeader, Stepper, styles, success } from '@/ui/components';
+import { Button, Card, Row, SectionHeader, Stepper, styles, success } from '@/ui/components';
 import { colors, space, type } from '@/ui/theme';
 
 function Bottle({ progress }: { progress: number }) {
@@ -49,7 +49,7 @@ function NumberField({ label, value, onChange, unit }: { label: string; value: s
   );
 }
 
-export default function Hydrate() {
+export function HydrateView() {
   const { state, addWater, updateProfile } = useStore();
   const today = dateKey(useNow());
   const { goalMl, log } = useDay(today);
@@ -81,8 +81,7 @@ export default function Hydrate() {
   };
 
   return (
-    <Screen>
-      <Text style={type.h1}>Hydrate</Text>
+    <>
 
       <Card style={{ flexDirection: 'row', gap: space.xl, alignItems: 'center' }}>
         <Bottle progress={water / goalMl} />
@@ -157,6 +156,6 @@ export default function Hydrate() {
           </View>
         )}
       </Card>
-    </Screen>
+    </>
   );
 }

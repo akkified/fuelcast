@@ -2,6 +2,22 @@
 
 All notable changes to FuelCast are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.0.0] - 2026-09-22
+
+### Added
+- **Gym planner (Train tab):** 56-exercise library with coaching cues, 20 starter workouts built on youth resistance-training guidance, a custom workout builder, "customize a copy", workout history, and linking workouts to scheduled lift sessions.
+- **Live workout logger:** reps and weight steppers, set check-off, automatic rest timer, effort (RPE) rating, and a post-workout refuel prompt.
+- **Smart Coach:** on-device muscle-readiness model (lifts + practices + games), game-aware day modes, ranked workout picks with reasons, a one-tap workout generator, and automatic weight progression.
+- **AI Coach (Coach tab):** chat with Claude (`claude-opus-5`) using structured outputs; replies can include a saveable workout (library exercises only), a recipe and shopping items. Works offline with on-device answers. The key is stored in the iOS Keychain.
+- **Recipes:** 20 recipes with macros computed from ingredients, "great for" window tags, ready / almost / shop matching, and "what food do you have?" quick entry.
+- **Shopping list:** weekly suggestions from the schedule, recipe gaps, typed items, share, and move-to-kitchen.
+- **Progress tab:** strength days vs. guidelines and muscle readiness alongside fuel insights.
+- Onboarding step for training goal, level, equipment and session length; Training and AI Coach sections in Settings.
+
+### Changed
+- Navigation is now five tabs: Today · Train · Fuel · Coach · Progress. Kitchen, Recipes, Shopping and Water live under Fuel.
+- Saved data is upgraded automatically from v1 to v2.
+
 ## [1.0.0] - 2026-09-22
 
 ### Added

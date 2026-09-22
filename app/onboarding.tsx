@@ -3,11 +3,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 
+import { EQUIPMENT_LABEL, type Equipment } from '@/data/exercises';
+import { GOAL_LABEL, LEVEL_LABEL, type Goal, type Level } from '@/data/workouts';
 import { formatFluid, toKg } from '@/engine/hydration';
 import { minutesOfDay, dateKey } from '@/engine/time';
 import type { Sport, Units } from '@/engine/types';
 import { DEFAULT_PROFILE, useStore } from '@/state/store';
-import { Button, Card, Chip, Screen, styles } from '@/ui/components';
+import { Button, Card, Chip, Screen, Stepper, styles } from '@/ui/components';
 import { colors, space, type } from '@/ui/theme';
 
 const SPORTS: Sport[] = [
@@ -25,13 +27,27 @@ export default function Onboarding() {
   const [units, setUnits] = useState<Units>('imperial');
   const [bottleMl, setBottleMl] = useState(710);
   const [weight, setWeight] = useState('');
+  const [goal, setGoal] = useState<Goal>('general');
+  const [level, setLevel] = useState<Level>('beginner');
+  const [equipment, setEquipment] = useState<Equipment[]>(['dumbbells']);
+  const [sessionMin, setSessionMin] = useState(40);
 
   const weightNum = Number(weight);
   const weightKg = weight.trim() === '' ? undefined : toKg(weightNum, units);
   const weightInvalid = weightKg !== undefined && (!Number.isFinite(weightKg) || weightKg < 27 || weightKg > 180);
 
   const finish = () => {
-    completeOnboarding({ name: name.trim() || 'Athlete', sport, units, bottleMl, weightKg: weightInvalid ? undefined : weightKg });
+    completeOnboarding({
+      name: name.trim() || 'Athlete',
+      sport,
+      units,
+      bottleMl,
+      weightKg: weightInvalid ? undefined : weightKg,
+      goal,
+      level,
+      equipment,
+      sessionMin,
+    });
     router.replace('/');
   };
 
@@ -62,7 +78,8 @@ export default function Onboarding() {
               ['calendar', 'Add your practices and games once.'],
               ['time-outline', 'Get a timeline of exactly when to eat and drink.'],
               ['basket', 'See the best combos from food you already have.'],
-              ['stats-chart', 'Learn how fueling changes the way you feel.'],
+              ['barbell', 'Train smarter with a gym planner and an AI coach.'],
+              ['restaurant', 'Get recipes and a shopping list from what you have.'],
             ].map(([icon, text]) => (
               <View key={text} style={{ flexDirection: 'row', gap: space.md, alignItems: 'center' }}>
                 <Ionicons name={icon as 'calendar'} size={22} color={colors.accent} />
@@ -88,7 +105,7 @@ export default function Onboarding() {
     return (
       <Screen>
         <View style={{ paddingTop: 24, gap: space.lg }}>
-          <Text style={type.label}>Step 1 of 2</Text>
+          <Text style={type.label}>Step 1 of 3</Text>
           <Text style={type.h1}>What should we call you?</Text>
           <TextInput
             value={name}
@@ -113,10 +130,56 @@ export default function Onboarding() {
     );
   }
 
+  if (step === 3) {
+    return (
+      <Screen>
+        <View style={{ paddingTop: 24, gap: space.lg }}>
+          <Text style={type.label}>Step 3 of 3</Text>
+          <Text style={type.h1}>Your training goal</Text>
+          <View style={styles.chipWrap}>
+            {(Object.keys(GOAL_LABEL) as Goal[]).map((g) => (
+              <Chip key={g} label={GOAL_LABEL[g]} selected={goal === g} onPress={() => setGoal(g)} />
+            ))}
+          </View>
+          <Text style={type.h1}>Weight-room experience</Text>
+          <View style={styles.chipWrap}>
+            {(Object.keys(LEVEL_LABEL) as Level[]).map((l) => (
+              <Chip key={l} label={LEVEL_LABEL[l]} selected={level === l} onPress={() => setLevel(l)} />
+            ))}
+          </View>
+          <Text style={type.h1}>Equipment you can use</Text>
+          <View style={styles.chipWrap}>
+            {(Object.keys(EQUIPMENT_LABEL) as Equipment[])
+              .filter((e) => e !== 'bodyweight')
+              .map((e) => (
+                <Chip
+                  key={e}
+                  label={EQUIPMENT_LABEL[e]}
+                  selected={equipment.includes(e)}
+                  onPress={() => setEquipment((xs) => (xs.includes(e) ? xs.filter((x) => x !== e) : [...xs, e]))}
+                />
+              ))}
+          </View>
+          <Text style={type.small}>Bodyweight exercises are always included.</Text>
+          <Card>
+            <Stepper
+              label="Usual workout length"
+              value={`${sessionMin} min`}
+              onDec={() => setSessionMin((m) => Math.max(15, m - 5))}
+              onInc={() => setSessionMin((m) => Math.min(90, m + 5))}
+            />
+          </Card>
+          <Button label="Build my forecast" icon="flash" onPress={finish} style={{ marginTop: space.lg }} />
+          <Button label="Back" variant="ghost" onPress={() => setStep(2)} />
+        </View>
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
       <View style={{ paddingTop: 24, gap: space.lg }}>
-        <Text style={type.label}>Step 2 of 2</Text>
+        <Text style={type.label}>Step 2 of 3</Text>
         <Text style={type.h1}>Units</Text>
         <View style={styles.chipWrap}>
           <Chip label="oz / lb" selected={units === 'imperial'} onPress={() => { setUnits('imperial'); setBottleMl(710); }} />
@@ -145,7 +208,7 @@ export default function Onboarding() {
           Only used to size your fuel and fluid targets and for the sweat test. It never leaves this phone, and FuelCast never sets weight goals.
         </Text>
 
-        <Button label="Build my forecast" icon="flash" onPress={finish} disabled={weightInvalid} style={{ marginTop: space.lg }} />
+        <Button label="Next" icon="arrow-forward" onPress={() => setStep(3)} disabled={weightInvalid} style={{ marginTop: space.lg }} />
         <Button label="Back" variant="ghost" onPress={() => setStep(1)} />
       </View>
     </Screen>

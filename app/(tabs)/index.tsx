@@ -2,12 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
+import { FOOD_BY_ID } from '@/data/foods';
+import { RECIPES } from '@/data/recipes';
 import { eventsOn, nextWindow, windowPhase } from '@/engine/forecast';
+import { rankRecipes } from '@/engine/recipes';
 import { bottlesFor, formatFluid } from '@/engine/hydration';
 import { addDays, dateKey, formatClock, formatDateLong, formatDuration, formatRange, minutesOfDay } from '@/engine/time';
 import type { FuelWindow } from '@/engine/types';
 import { useNow, useStore } from '@/state/store';
 import { useDay } from '@/state/useDay';
+import { findWorkout, useRecommendation } from '@/state/useTraining';
 import { Button, Card, Pill, ProgressBar, Ring, Row, Screen, SectionHeader, WindowBadge, success } from '@/ui/components';
 import { EnergyPicker } from '@/ui/EnergyCheckIn';
 import { colors, space, type, windowColor } from '@/ui/theme';
@@ -36,6 +40,16 @@ export default function Today() {
   const tomorrow = eventsOn(addDays(today, 1), state.events)[0];
 
   const openWindow = (w: FuelWindow) => router.push({ pathname: '/window/[id]', params: { id: w.id, date: today } });
+
+  // Training: today's scheduled workout, or Smart Coach's pick.
+  const rec = useRecommendation(now);
+  const doneToday = state.workoutLogs.find((l) => l.date === today);
+  const scheduled = events.map((e) => findWorkout(state, e.workoutId)).find(Boolean);
+  const trainPick = scheduled ?? rec.picks[0]?.workout;
+
+  // Cooking: the best recipe you can make now for your next window.
+  const recipeFocus = next && next.type !== 'during' ? next.type : 'recovery';
+  const cook = rankRecipes(RECIPES, state.pantry, recipeFocus, profile.weightKg).find((m) => m.status !== 'shop');
 
   return (
     <Screen>
@@ -148,6 +162,47 @@ export default function Today() {
           </View>
         );
       })}
+
+      <SectionHeader title="Training" />
+      {doneToday ? (
+        <Card style={{ gap: 4, borderColor: colors.great }}>
+          <Text style={[type.h2, { color: colors.great }]}>✅ {doneToday.name}</Text>
+          <Text style={type.dim}>Workout done. Refuel within an hour and get good sleep tonight.</Text>
+        </Card>
+      ) : trainPick ? (
+        <Card style={{ gap: space.sm }}>
+          <Text style={type.label}>{scheduled ? 'On your schedule' : `Smart Coach · ${rec.headline.toLowerCase()}`}</Text>
+          <Row style={{ gap: space.md }}>
+            <Text style={{ fontSize: 28 }}>{trainPick.emoji}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={type.h2}>{trainPick.name}</Text>
+              <Text style={type.small}>~{trainPick.durationMin} min · {trainPick.items.length} exercises</Text>
+            </View>
+          </Row>
+          <Row style={{ gap: space.sm }}>
+            <Button label="View" variant="secondary" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: trainPick.id } })} style={{ flex: 1, paddingVertical: 10 }} />
+            <Button label="Start" icon="play" onPress={() => router.push({ pathname: '/workout/session', params: { id: trainPick.id } })} style={{ flex: 1, paddingVertical: 10 }} />
+          </Row>
+        </Card>
+      ) : null}
+
+      {cook && (
+        <>
+          <SectionHeader title="Cook something" />
+          <Card onPress={() => router.push({ pathname: '/recipe/[id]', params: { id: cook.recipe.id } })} style={{ flexDirection: 'row', gap: space.md, alignItems: 'center' }}>
+            <Text style={{ fontSize: 32 }}>{cook.recipe.emoji}</Text>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[type.body, { fontWeight: '700' }]}>{cook.recipe.name}</Text>
+              <Text style={type.small}>
+                {cook.status === 'ready'
+                  ? `You have everything · ${cook.recipe.minutes} min`
+                  : `Just need ${cook.missing.map((id) => FOOD_BY_ID[id]?.name).join(' + ')}`}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textFaint} />
+          </Card>
+        </>
+      )}
 
       <SectionHeader title="Hydration" />
       <Card style={{ gap: space.md }}>

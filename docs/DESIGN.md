@@ -5,7 +5,8 @@
 1. **Answer "what do I do right now?" in under 3 seconds.** The top card on Today is always the current or next fuel window, with a countdown and one button.
 2. **Teach without lecturing.** Every window has a one-sentence "Why it matters" and a practical tip. No jargon walls.
 3. **Performance framing, never body framing.** The app talks about fuel, energy, and recovery, never calories or weight loss.
-4. **Fast logging.** Logging a window takes two taps (pick a combo, then "I ate this"). An energy check-in takes one tap.
+4. **Fast logging.** Logging a window takes two taps (pick a combo, then "I ate this"), an energy check-in takes one, and a set takes one.
+5. **Explain every recommendation.** Every score, pick and tag comes with a short reason, so athletes learn *why*, not just *what*.
 
 ## Visual language
 
@@ -23,40 +24,59 @@ Each window type has a consistent **color and icon** across the timeline, the de
 
 Typography uses the system font (SF Pro on iPhone) with a clear scale: 30 / 24 / 18 / 15 / 12 pt.
 
+## Information architecture: five tabs
+
+| Tab | Question it answers | Sections |
+|---|---|---|
+| **Today** | "What do I do right now?" | Fuel Score, next fuel window, fuel forecast timeline, today's training, a recipe you can cook, water |
+| **Train** | "How should I train?" | Plan (Smart Coach picks, one-tap workout builder, weekly schedule) · Workouts (library and custom) · History |
+| **Fuel** | "What do I eat, cook and buy?" | Kitchen (Fuel Fit ratings) · Recipes · List (shopping) · Water (hydration and sweat test) |
+| **Coach** | "Can I just ask?" | Chat with the AI Coach (Claude), or on-device Smart Coach answers offline |
+| **Progress** | "Is it working?" | Fuel Score trend, streak, fuel vs. energy, windows hit, strength days, muscle readiness |
+
 ## Screen flow
 
 ```mermaid
 flowchart TD
-  W[Welcome] -->|Get started| O1[Name + sport]
+  W[Welcome] -->|Get started| O[3-step setup: name/sport → units/bottle/weight → goal/level/equipment]
   W -->|Explore with a sample athlete| T
-  O1 --> O2[Units, bottle, optional weight]
-  O2 --> T[Today]
-  T -->|Plan it / tap a window| FW[Fuel window<br/>why · targets · best picks · log]
-  T -->|gear| ST[Settings]
-  T --- S[Schedule] --- K[Kitchen] --- H[Hydrate] --- I[Insights]
-  S -->|+ Add / tap a session| E[Session editor<br/>live forecast preview]
-  FW -->|Stock my kitchen| K
+  O --> T[Today]
+  T -->|tap a window| FW[Fuel window: why · targets · best combos · log]
+  T -->|Start| WS[Workout session]
+  T -->|Cook something| RD[Recipe detail]
+  T --- TR[Train] --- FU[Fuel] --- CO[Coach] --- PR[Progress]
+  TR -->|pick / build| WD[Workout detail: readiness · suggested loads]
+  WD --> WS
+  WD -->|Edit / customize| WE[Workout builder]
+  TR -->|Add session| EV[Session editor: live forecast · link a workout]
+  FU -->|Recipe| RD
+  RD -->|missing items| FU
+  CO -->|Save / Start AI workout| WD
+  WS -->|Recovery recipes| FU
 ```
 
 ## Key screens
 
-| Screen | Purpose | Details that matter |
-|---|---|---|
-| **Welcome / onboarding** | Value in 4 lines, then a 2-step setup | "Explore with a sample athlete" lets judges and new users see a full app instantly. Weight is explicitly optional, with the reason given. |
-| **Today** | The fuel forecast | Fuel Score ring; "Right now / Up next" card with a countdown; a vertical timeline with colored dots (filled = done); past-but-missed windows are dimmed, and the hero card invites you to log them; one-tap water. |
-| **Fuel window** | Turn advice into a decision | Why, gram targets as pills, the top 3 combos from *your* kitchen with a 0–100 score and a plain-English note, and a fallback to popular picks if the kitchen is empty. |
-| **Schedule / session editor** | Enter your week once | Chips instead of typing; steppers in 15-minute steps; a **live preview** of the windows the session will create. |
-| **Kitchen** | What you have = what you're offered | "Check fit for" switches every food's rating between window types, with a reason for each rating. |
-| **Hydrate** | Personalized fluids | An animated bottle, an itemized goal ("why is my goal 156 oz?"), and a 3-step sweat test with validation and a warning at 2% loss. |
-| **Insights** | Close the habit loop | Streak, 7-day Fuel Score bars, fuel vs. energy comparison, per-window hit rates with the "biggest opportunity," and your go-to foods. |
+| Screen | Details that matter |
+|---|---|
+| **Today** | One glance: score ring, "Right now / Up next" countdown, a timeline with colored dots (filled = done), then **training** (scheduled workout or Smart Coach pick) and **cook something** (the best recipe you can make now). |
+| **Fuel window** | Why it matters, gram targets as pills, the top 3 combos from *your* kitchen with 0–100 scores and notes, and one tap to log. |
+| **Smart Coach card** | A headline mode ("Game tomorrow: keep it light"), a plain-English reason, a one-tap Start, and 3 ranked workouts, each with ✓ reasons. Explainable AI, not a black box. |
+| **Workout detail** | A readiness % for the muscles it hits, sets × reps, rest, suggested weight with why, and tap-to-reveal coaching cues. |
+| **Workout session** | Big +/− steppers for reps and weight, a checkbox per set, an automatic rest timer, effort (1–10) at the end, then a "refuel within the hour" nudge that links to recovery recipes. |
+| **Workout builder** | Search or filter the 56-exercise library by muscle; per-exercise sets, reps and rest steppers; reorder and remove; a live time estimate. |
+| **Recipes** | A "What food do you have?" box (type "eggs, tortillas, cheese"), then Ready / Almost / Shop sections with window tags and missing items. |
+| **Shopping list** | Suggestions from this week's schedule with counts and reasons, typed items, check-off, share, and "Put bought items in my kitchen". |
+| **Coach** | Chat bubbles labeled "AI Coach · Claude" or "Smart Coach · on-device"; replies can carry a workout card (Save / Start), a recipe card and shopping chips (Add to list). There are quick-prompt chips and a clear "Offline mode" badge. |
+| **Settings** | Profile, training preferences, the AI Coach key with a plain explanation of exactly what's sent, demo data, reset, and cited sources. |
 
 ## Accessibility
 
 - Buttons, chips, and checkboxes set `accessibilityRole` and state, so VoiceOver reads them as controls with their selected or checked state.
 - Ratings always have **text + color**, never color alone.
-- Tap targets are at least 44 pt (steppers, tab bar, and list rows).
+- Main steppers, the tab bar and list rows are at least 44 pt; the compact steppers in the workout logger get extra touch area (hitSlop).
 - High-contrast text on the dark background.
-- Destructive actions (delete a session, reset data) need a **second tap to confirm**.
+- Destructive actions (delete a session or workout, discard a workout, clear chat, reset data) need a **second tap to confirm**.
 
 ## Empty and error states
 
@@ -65,3 +85,5 @@ flowchart TD
 - Empty kitchen → popular picks from the full library plus a **Stock my kitchen** button.
 - Invalid sweat-test numbers → a specific, friendly error (for example, "That's a bigger change than a single session causes. Re-weigh and try again.").
 - Insights before enough data → explains exactly what's needed ("rate how your sessions feel…").
+- No API key → Coach runs in offline mode and says so, with a Connect button.
+- AI errors (bad key, rate limit, no internet, refusal) → a friendly message in the chat, never a crash.

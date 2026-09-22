@@ -2,7 +2,7 @@
   "expo": {
     "name": "FuelCast",
     "slug": "fuelcast",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "fuelcast",
@@ -30,7 +30,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#0B0F14"
         }
-      ]
+      ],
+      "expo-secure-store"
     ]
   }
 }

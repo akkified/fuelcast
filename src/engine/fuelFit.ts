@@ -6,6 +6,7 @@ import type { Food, ItemFit, Macros, PlateResult, Targets, WindowType } from './
 /** How appropriate a single food is for a window, based on digestion and purpose. */
 export function itemFit(food: Food, type: WindowType): ItemFit {
   if (food.caution) return { level: 'avoid', reason: 'Not recommended for teens' };
+  if (food.ingredientOnly) return { level: 'ok', reason: 'Cooking ingredient. See Recipes' };
   const { carbs, protein, fat, fiber } = food;
 
   switch (type) {
@@ -127,7 +128,7 @@ export function bestCombos(
 ): PlateResult[] {
   const maxItems = type === 'during' ? 1 : (opts.maxItems ?? 3);
   const top = opts.top ?? 3;
-  const candidates = pantry.filter((f) => itemFit(f, type).level !== 'avoid');
+  const candidates = pantry.filter((f) => !f.ingredientOnly && itemFit(f, type).level !== 'avoid');
 
   const scored: PlateResult[] = [];
   for (let size = 1; size <= Math.min(maxItems, candidates.length); size++) {

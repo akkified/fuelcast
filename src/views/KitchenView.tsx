@@ -6,7 +6,7 @@ import { CATEGORY_LABEL, FOODS } from '@/data/foods';
 import { itemFit } from '@/engine/fuelFit';
 import type { Food, WindowType } from '@/engine/types';
 import { useStore } from '@/state/store';
-import { Chip, FitBadge, Pill, Row, Screen, styles, tap } from '@/ui/components';
+import { Chip, FitBadge, Pill, Row, styles, tap } from '@/ui/components';
 import { colors, fitColor, radius, space, type, windowColor } from '@/ui/theme';
 
 const WINDOWS: { type: WindowType; label: string }[] = [
@@ -18,7 +18,7 @@ const WINDOWS: { type: WindowType; label: string }[] = [
 
 type CategoryFilter = Food['category'] | 'all' | 'mine';
 
-export default function Kitchen() {
+export function KitchenView() {
   const { state, togglePantry } = useStore();
   const [windowType, setWindowType] = useState<WindowType>('topOff');
   const [category, setCategory] = useState<CategoryFilter>('all');
@@ -34,12 +34,11 @@ export default function Kitchen() {
   }, [query, category, state.pantry]);
 
   return (
-    <Screen>
-      <Row style={{ justifyContent: 'space-between' }}>
-        <Text style={type.h1}>My Kitchen</Text>
+    <>
+      <Row style={{ justifyContent: 'space-between', gap: space.md }}>
+        <Text style={[type.dim, { flex: 1 }]}>Tap what you have at home or in your bag. Combos and recipes are built from these foods.</Text>
         <Pill label={`${state.pantry.length} items`} color={colors.accent} />
       </Row>
-      <Text style={type.dim}>Tap what you have at home or in your bag. FuelCast builds your combos only from these foods.</Text>
 
       <Text style={type.label}>Check fit for</Text>
       <View style={styles.chipWrap}>
@@ -110,6 +109,6 @@ export default function Kitchen() {
           </Pressable>
         );
       })}
-    </Screen>
+    </>
   );
 }

@@ -28,10 +28,10 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: icon('today') }} />
-      <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: icon('calendar') }} />
-      <Tabs.Screen name="kitchen" options={{ title: 'Kitchen', tabBarIcon: icon('basket') }} />
-      <Tabs.Screen name="hydrate" options={{ title: 'Hydrate', tabBarIcon: icon('water') }} />
-      <Tabs.Screen name="insights" options={{ title: 'Insights', tabBarIcon: icon('stats-chart') }} />
+      <Tabs.Screen name="train" options={{ title: 'Train', tabBarIcon: icon('barbell') }} />
+      <Tabs.Screen name="fuel" options={{ title: 'Fuel', tabBarIcon: icon('nutrition') }} />
+      <Tabs.Screen name="coach" options={{ title: 'Coach', tabBarIcon: icon('sparkles') }} />
+      <Tabs.Screen name="progress" options={{ title: 'Progress', tabBarIcon: icon('stats-chart') }} />
     </Tabs>
   );
 }

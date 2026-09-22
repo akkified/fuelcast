@@ -1,5 +1,8 @@
 // Core domain types shared by the engine, the store, and the UI.
 
+import type { Equipment } from '../data/exercises';
+import type { Goal, Level } from '../data/workouts';
+
 export type Units = 'imperial' | 'metric';
 
 export type Sport =
@@ -24,6 +27,12 @@ export interface Profile {
   weightKg?: number;
   /** Litres per hour, saved from the sweat test. */
   sweatRateLph?: number;
+  /** Training preferences for the gym planner and Smart Coach. */
+  goal: Goal;
+  level: Level;
+  equipment: Equipment[];
+  /** Preferred workout length in minutes. */
+  sessionMin: number;
 }
 
 export type EventKind = 'practice' | 'game' | 'lift' | 'conditioning';
@@ -41,6 +50,8 @@ export interface TrainingEvent {
   startMin: number;
   durationMin: number;
   intensity: Intensity;
+  /** Workout plan to run for this session (lift / conditioning). */
+  workoutId?: string;
 }
 
 export type WindowType = 'preMeal' | 'topOff' | 'during' | 'recovery';
@@ -93,6 +104,8 @@ export interface Food {
   fried?: boolean;
   /** Not recommended for teens — never suggested. */
   caution?: string;
+  /** A cooking ingredient (e.g. dry oats, marinara), not something you'd eat alone. Never suggested as a snack. */
+  ingredientOnly?: boolean;
 }
 
 export type FitLevel = 'great' | 'ok' | 'avoid';
@@ -130,4 +143,26 @@ export interface DayLog {
   waterMl: number;
   /** Session energy check-ins, keyed by event id. 1 (drained) – 5 (unstoppable). */
   energy: Record<string, number>;
+}
+
+export interface SetLog {
+  exerciseId: string;
+  targetReps: number;
+  reps: number;
+  weightKg?: number;
+  done: boolean;
+}
+
+export interface WorkoutLog {
+  id: string;
+  workoutId: string;
+  name: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** Epoch ms. */
+  startedAt: number;
+  finishedAt: number;
+  /** Session effort, 1 (easy) – 10 (max). */
+  rpe?: number;
+  sets: SetLog[];
 }

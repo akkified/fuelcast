@@ -8,7 +8,7 @@ import { addDays, dateKey, minutesOfDay, WEEKDAYS_SHORT, weekdayOf } from '@/eng
 import type { DayLog, WindowType } from '@/engine/types';
 import { useNow, useStore } from '@/state/store';
 import { computeDay } from '@/state/useDay';
-import { Card, Pill, ProgressBar, Row, Screen, SectionHeader } from '@/ui/components';
+import { Card, ProgressBar, Row, SectionHeader } from '@/ui/components';
 import { colors, space, type, windowColor } from '@/ui/theme';
 
 const WINDOW_LABEL: Record<WindowType, string> = {
@@ -18,7 +18,7 @@ const WINDOW_LABEL: Record<WindowType, string> = {
   recovery: 'Recovery',
 };
 
-export default function Insights() {
+export function InsightsView() {
   const { state } = useStore();
   const now = useNow();
   const today = dateKey(now);
@@ -68,9 +68,7 @@ export default function Insights() {
   const weakest = [...types].sort((a, b) => data.hits[a].done / data.hits[a].total - data.hits[b].done / data.hits[b].total)[0];
 
   return (
-    <Screen>
-      <Text style={type.h1}>Insights</Text>
-      {state.demo && <Pill label="Sample athlete · demo data" color={colors.warn} />}
+    <>
 
       <Row style={{ gap: space.md }}>
         <Card style={{ flex: 1, gap: 4 }}>
@@ -189,6 +187,6 @@ export default function Insights() {
           </Card>
         </>
       )}
-    </Screen>
+    </>
   );
 }

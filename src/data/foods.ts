@@ -62,6 +62,22 @@ export const FOODS: Food[] = [
   // Veg
   { id: 'broccoli', name: 'Broccoli', serving: '1 cup', category: 'veg', emoji: '🥦', carbs: 6, protein: 2.6, fat: 0.3, fiber: 2.4 },
 
+  // Cooking staples (used by recipes; ingredientOnly items are never suggested as snacks)
+  { id: 'tortilla', name: 'Flour tortilla', serving: '1 large', category: 'grain', emoji: '🌯', carbs: 36, protein: 6, fat: 7, fiber: 2 },
+  { id: 'oats', name: 'Rolled oats (dry)', serving: '½ cup', category: 'grain', emoji: '🌾', carbs: 27, protein: 5, fat: 3, fiber: 4, ingredientOnly: true },
+  { id: 'cheddar', name: 'Shredded cheese', serving: '¼ cup', category: 'dairy', emoji: '🧀', carbs: 1, protein: 7, fat: 9, fiber: 0, ingredientOnly: true },
+  { id: 'marinara', name: 'Marinara sauce', serving: '½ cup', category: 'veg', emoji: '🍅', carbs: 10, protein: 2, fat: 2, fiber: 2, ingredientOnly: true },
+  { id: 'spinach', name: 'Spinach', serving: '1 cup raw', category: 'veg', emoji: '🥬', carbs: 1, protein: 1, fat: 0, fiber: 0.7, ingredientOnly: true },
+  { id: 'bellpepper', name: 'Bell pepper', serving: '1 medium', category: 'veg', emoji: '🫑', carbs: 7, protein: 1, fat: 0.3, fiber: 2.5, ingredientOnly: true },
+  { id: 'salsa', name: 'Salsa', serving: '¼ cup', category: 'veg', emoji: '🌶️', carbs: 4, protein: 1, fat: 0, fiber: 1, ingredientOnly: true },
+  { id: 'avocado', name: 'Avocado', serving: '½ fruit', category: 'fruit', emoji: '🥑', carbs: 6, protein: 1.5, fat: 11, fiber: 5, ingredientOnly: true },
+  { id: 'groundturkey', name: 'Lean ground turkey', serving: '3 oz cooked', category: 'protein', emoji: '🦃', carbs: 0, protein: 22, fat: 8, fiber: 0, ingredientOnly: true },
+  { id: 'frozenveg', name: 'Frozen stir-fry veggies', serving: '1 cup', category: 'veg', emoji: '🥕', carbs: 8, protein: 2, fat: 0, fiber: 3, ingredientOnly: true },
+  { id: 'soysauce', name: 'Soy sauce', serving: '1 tbsp', category: 'veg', emoji: '🥢', carbs: 1, protein: 1, fat: 0, fiber: 0, ingredientOnly: true },
+  { id: 'jam', name: 'Jam', serving: '1 tbsp', category: 'snack', emoji: '🍓', carbs: 13, protein: 0, fat: 0, fiber: 0, ingredientOnly: true },
+  { id: 'whitebread', name: 'White bread', serving: '2 slices', category: 'grain', emoji: '🍞', carbs: 26, protein: 4, fat: 2, fiber: 1.4, ingredientOnly: true },
+  { id: 'cinnamon', name: 'Cinnamon', serving: 'pinch', category: 'snack', emoji: '🟤', carbs: 0, protein: 0, fat: 0, fiber: 0, ingredientOnly: true },
+
   // Drinks
   { id: 'sportsdrink', name: 'Sports drink', serving: '20 oz', category: 'drink', emoji: '🧃', carbs: 34, protein: 0, fat: 0, fiber: 0 },
   {

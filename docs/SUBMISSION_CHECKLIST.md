@@ -14,7 +14,7 @@
 - [ ] **The theme**: say "Fitness and Nutrition" out loud (script, 0:40)
 - [ ] **A problem statement** (script, 0:12–0:40)
 - [ ] **A target audience**: high-school athletes, ages 14–18 (script, 0:12–0:40)
-- [ ] **An app demonstration and walkthrough** showing **at least 4 key screens**. The script shows 7.
+- [ ] **An app demonstration and walkthrough** showing **at least 4 key screens**. The script shows 8.
 - [ ] **A technical explanation** of how the app works (script, 2:10–2:45)
 - [ ] **Length of 3:00 or less.** Check the exported file's duration.
 
@@ -22,9 +22,10 @@
 
 - [ ] `npm install` then `npx expo start`; scan the QR code with Expo Go on the iPhone
 - [ ] Load the sample athlete (Settings → Load sample athlete, or "Explore with a sample athlete")
-- [ ] Record between 2:45 and 3:15 PM on a Mon, Tue, or Thu so "Right now: Top-off snack" appears
+- [ ] Record between 2:45 and 3:15 PM on a **Tuesday** so "Right now: Top-off snack" and "Game tomorrow: keep it light" both appear
+- [ ] Decide on the AI Coach demo: a live Claude key (ask a parent or guardian), or offline mode (use the quick prompts and adjust one narration line)
 - [ ] Do Not Disturb on, full battery, max brightness
-- [ ] Run `npm test` and confirm it still says 35 passing (the script quotes that number)
+- [ ] Run `npm test` and confirm it still says 67 passing (the script quotes that number)
 - [ ] Read the Insights number off the screen for the `[READ THE NUMBER ON SCREEN]` line
 - [ ] Check the NFHS participation figure (docs/RESEARCH.md, reference 1)
 

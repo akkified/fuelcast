@@ -22,7 +22,8 @@ npm run check         # TypeScript type-check + Jest tests (this is what CI runs
 2. **Screens live in `app/`** (Expo Router: file name = route). Shared UI goes in `src/ui/`.
 3. **Cite the science.** Any change to fueling or hydration rules must reference a position statement or peer-reviewed source in `docs/RESEARCH.md`.
 4. **Teen-safe by design:** never add calorie counts, weight-loss goals, or language that labels foods as "bad."
-5. **Privacy:** no network calls, analytics, or accounts without a team discussion first.
+5. **Privacy:** the only network call is the optional AI Coach (`src/ai/coach.ts`). Never add the athlete's name or body weight to its context, and no analytics or accounts without a team discussion first.
+6. **AI safety:** changes to the coach's system prompt must keep the teen-safety rules (no calorie, weight-loss or supplement advice; refer injuries to an athletic trainer).
 
 ## Commit messages
 

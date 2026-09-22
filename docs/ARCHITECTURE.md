@@ -25,9 +25,15 @@ FuelCast uses **Expo SDK 57** (React Native 0.86, React 19) with **TypeScript in
 ├──────────────────────────────────────────────────────────────┤
 │  Engine layer: src/engine/ (pure TypeScript, 0 dependencies)  │
 │  forecast · fuelFit · targets · hydration · insights · time   │
+│  coach (readiness, ranking, generator, progression)           │
+│  recipes · shopping                                           │
 │  Deterministic functions → easy to unit-test (Jest)           │
 ├──────────────────────────────────────────────────────────────┤
-│  Data: src/data/foods.ts (USDA-based library), demo.ts        │
+│  AI layer: src/ai/ (Claude client, context, offline coach,    │
+│  Keychain key storage)                                        │
+├──────────────────────────────────────────────────────────────┤
+│  Data: foods (59), exercises (56), starter workouts (20),     │
+│  recipes (20), demo athlete                                   │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -42,7 +48,15 @@ FuelWindow     { id, eventId, type, title, startMin, endMin, why, tip, targets, 
 Targets        { carbs: {min,max}, protein: {min,max}, fatMax, fiberMax }   // grams
 Food           { id, name, serving, category, carbs, protein, fat, fiber, fried?, caution? }
 DayLog         { windows: {windowId → {status, foodIds, at}}, waterMl, energy: {eventId → 1..5} }
+Exercise       { id, name, muscles[], secondary[], equipment, type, cue, timed? }
+Workout        { id, name, goal, level, durationMin, items: [{exerciseId, sets, reps, restSec}], custom?, source? }
+WorkoutLog     { id, workoutId, date, startedAt, finishedAt, rpe?, sets: [{exerciseId, targetReps, reps, weightKg?, done}] }
+Recipe         { id, name, meal, minutes, ingredients: [{foodId, servings, optional?}], steps[] }
+ShoppingItem   { id, name, foodId?, note?, checked, source }
+ChatMessage    { role, text, content? (raw API blocks), workout?, recipe?, shopping?, offline? }
 ```
+
+Saved data is **versioned** (currently v2). Version-1 data from FuelCast 1.0 is migrated automatically on first launch, so existing users keep their history.
 
 **Fuel windows are never stored.** They're computed from the schedule every time, so editing a practice time instantly updates the forecast. Only what the athlete *did* (logs) is saved. Times are "minutes after midnight" and days are local `YYYY-MM-DD` keys, which keeps the engine free of time-zone bugs.
 
@@ -141,19 +155,68 @@ Daily goal = **2.0 L baseline** + for each session: `hours × sweat rate (or 0.5
 - **Fuel vs. energy**: each session with an energy rating is labeled *fueled* if the athlete completed a pre-meal or top-off for it (or a "Recover + reload" feeding into it). FuelCast averages the ratings in each group, and only shows the comparison once both groups have at least 2 sessions.
 - **Streak** = consecutive days with Fuel Score ≥ 70. Today only counts once it reaches 70, so an unfinished day doesn't break the streak.
 
+### 5.6 Smart Coach: `readiness()`, `recommend()`
+
+**Muscle readiness.** Every completed set adds fatigue to the muscles it works (1.0 for primary muscles, 0.5 for secondary), scaled by the session's effort (RPE ÷ 7). Every practice or game adds fatigue to the legs and conditioning (1.5 / 2 / 3 "set equivalents" per hour for light, moderate and hard). Fatigue **halves every 24 hours**, and readiness = 1 − fatigue ÷ 10 (clamped 0–1).
+
+**Day context** decides the mode, checked in this order:
+
+| Condition | Mode | What it favors |
+|---|---|---|
+| Already trained today | Done | Mobility only |
+| Game today | Game-day prime | Mobility ≤ 20 min |
+| Game tomorrow | Keep it light | Mobility, core, upper body; no loaded leg work, conditioning or power |
+| Game yesterday, or legs < 35% ready | Recover | Mobility |
+| Strength yesterday, or ≥ 3 strength days this week | Alternate | Conditioning, core, mobility |
+| Otherwise | Train | Your goal |
+
+**Ranking.** Each workout the athlete has the equipment for (and that's at most one level above theirs) scores `40 + 40 × readiness of the muscles it hits`, +15 for matching the goal, −30 if one level up, a fit-to-time bonus or penalty, −30/−10 if done in the last 1/3 days, plus the mode's modifiers. The top 3 come back with plain-English reasons ("Won't tire your legs before the game", "Targets fresh muscles").
+
+### 5.7 Workout generator: `generateWorkout()`
+
+Each focus (total body, upper, lower, power, core, conditioning, mobility) is a list of **movement slots** (squat, hinge, single-leg, push, pull, core, jump…). For each slot, it picks from candidate exercises the athlete can do (equipment; barbells only for intermediate+), preferring the freshest muscles and rotating between near-equal choices. The dose follows the athlete's level (beginner 2×12, intermediate 3×10, advanced 3×8; power 3×4–5). Then it fits the time budget: trim sets from the end, drop exercises (keeping at least 3), and add sets back if there's lots of time left.
+
+### 5.8 Progression: `suggestLoad()`
+
+It looks up the last session with weight for that exercise. If every set hit its target reps and effort was ≤ 8/10, it suggests about 5% more, rounded up to the next plate step (2.5 lb or 1 kg, and at least one step). Otherwise it suggests repeating the weight ("Own this weight first"). The live logger pre-fills these weights.
+
+### 5.9 Recipes and shopping
+
+- **Recipe macros** are computed from ingredient quantities × the same USDA-based food values, so they're always consistent with the rest of the app.
+- **"Great for" tags:** a recipe is tagged for a window only if it scores ≥ 85 with the Fuel Fit scorer **and** meets that window's core needs (pre-game: ≥ 90% of carb target, fat and fiber under limits; recovery: carbs and protein both ≥ 90% of target; top-off: small and easy to digest).
+- **Matching:** ready (have every required ingredient), almost (missing 1–2), or shop. Ranked by status, then by fit for the chosen window.
+- **Week plan:** it counts each window type across the next 7 days. If the kitchen has fewer than two "great fit" foods for a window type, it suggests staples that *are* great fits, with quantities ("Banana ×7: for 7 top-off snacks this week").
+- **Bought items** that match a library food move into the kitchen with one tap.
+
+### 5.10 AI Coach (Claude)
+
+| Piece | Design |
+|---|---|
+| Model | `claude-opus-5` via the Messages API, `effort: low` for fast chat replies |
+| Transport | `fetch` to `https://api.anthropic.com/v1/messages`. The official TypeScript SDK documents that React Native is not a supported runtime, so the app sends the same request shape over REST. |
+| Output | **Structured outputs** (`output_config.format` with a JSON schema): `{ reply, workout \| null, recipe \| null, shopping[] }`. The schema's `exerciseId` is an **enum of our 56 exercise IDs**, so an AI workout always maps to real exercises and can be saved and run in the planner. |
+| Context | Each message is prefixed with an `<athlete_context>` block: sport, level, goal, equipment, the next 4 days of schedule, the next fuel window, muscle readiness, the last 5 workouts, and kitchen foods. **No name or body weight.** |
+| Safety | The system prompt encodes youth training and fueling guidance, bans calorie, weight-loss and supplement advice, and routes pain, injury or disordered-eating mentions to an athletic trainer or doctor. `stop_reason: "refusal"` is handled, and the server-side `fallbacks: "default"` option is enabled. |
+| Efficiency | The long, stable system prompt (including the exercise list) is marked `cache_control: ephemeral` for prompt caching. Only completed exchanges are replayed as history, with the assistant's content blocks sent back unchanged. |
+| Reliability | 90 s timeout, one retry on 408/409/429/5xx/529 or network failure, and friendly messages for bad keys, billing, rate limits and outages. The response's numbers are clamped (sets 1–6, reps 1–30 or 1–600 s, rest 0–300 s), and unknown exercises are dropped. |
+| Key | Entered by the athlete in Settings and stored in the iOS **Keychain** (`expo-secure-store`); never in the app-state JSON. |
+| Offline | Without a key, the Coach tab answers the four common intents on-device with the engines above: plan today, build a workout, cook from the kitchen, plan shopping. |
+
+> **Production note:** a store release would route AI requests through a small backend (so no API key lives on the phone) and add per-user rate limits. The client code already isolates the call in `askCoach()`, so swapping the endpoint is a one-line change.
+
 ## 6. Persistence and privacy
 
 - The whole app state is one JSON document saved to **AsyncStorage** (iOS: app-sandboxed native storage; web: localStorage) after every change.
 - The saved state is version-checked on load. Corrupt or incompatible data falls back to a clean start instead of crashing.
 - Screens don't render until saved data has loaded, so there's no flash of default values.
-- **Nothing leaves the device**: no accounts, no analytics, no network calls.
+- **Nothing leaves the device** except optional AI Coach messages (to api.anthropic.com), which the athlete turns on with their own key. No accounts, no analytics.
 
 ## 7. Quality
 
 | Check | How |
 |---|---|
 | Type safety | `tsc --noEmit` in strict mode, no `any` |
-| Logic | Jest unit tests for forecast timing, collision rules, scoring, combo search, sweat math, insights, date math |
+| Logic | 67 Jest unit tests: forecast timing and collisions, Fuel Fit scoring and combo search, sweat math, insights, readiness, coach modes, workout generator, progression, recipe tags and matching, shopping suggestions, AI request/response handling (with a mocked network) |
 | Native build | `npx expo export --platform ios` compiles the iOS bundle |
 | Dependency health | `npx expo-doctor`: 21/21 checks pass |
 | CI | GitHub Actions runs type-check and tests on every push and pull request |
@@ -161,7 +224,8 @@ Daily goal = **2.0 L baseline** + for each session: `hours × sweat rate (or 0.5
 ## 8. Roadmap
 
 1. **Push reminders** ("Top-off snack in 10 minutes") with `expo-notifications`
-2. **Team mode**: coaches share the schedule with a code, so athletes don't enter it themselves
-3. **School-menu import**: pull the cafeteria menu so lunch picks are specific
-4. **Apple Health**: import workouts automatically
-5. **Allergy and dietary filters** (vegetarian, dairy-free, nut-free) in the combo search
+2. **Coach backend**: a small server so the AI Coach works without a personal API key
+3. **Team mode**: coaches share the schedule and assign workouts with a code
+4. **School-menu import**: pull the cafeteria menu so lunch picks are specific
+5. **Apple Health**: import workouts and heart-rate data automatically
+6. **Allergy and dietary filters** (vegetarian, dairy-free, nut-free) in combos, recipes and the shopping list

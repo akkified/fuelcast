@@ -1,6 +1,6 @@
 {
   "name": "fuelcast",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "main": "expo-router/entry",
   "dependencies": {
@@ -13,6 +13,7 @@
     "expo-haptics": "~57.0.3",
     "expo-linking": "~57.0.10",
     "expo-router": "~57.0.22",
+    "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
@@ -32,7 +33,7 @@
     "jest-expo": "~57.0.5",
     "typescript": "~6.0.3"
   },
-  "description": "FuelCast — a fuel forecast for teen athletes. Know what to eat and drink, and when, around every practice and game.",
+  "description": "FuelCast: fuel forecast, gym planner, recipes and an AI coach for teen athletes.",
   "scripts": {
     "start": "expo start",
     "ios": "expo start --ios",

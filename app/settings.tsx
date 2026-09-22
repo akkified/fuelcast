@@ -1,12 +1,16 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, Text, TextInput, View } from 'react-native';
 
+import { COACH_MODEL } from '@/ai/coach';
+import { getApiKey, maskKey, setApiKey } from '@/ai/key';
+import { EQUIPMENT_LABEL, type Equipment } from '@/data/exercises';
+import { GOAL_LABEL, LEVEL_LABEL, type Goal, type Level } from '@/data/workouts';
 import { formatFluid, formatWeight, LB_PER_KG, ML_PER_OZ, toKg } from '@/engine/hydration';
 import { dateKey, minutesOfDay } from '@/engine/time';
 import type { Units } from '@/engine/types';
 import { useStore } from '@/state/store';
-import { Button, Card, Chip, Row, Screen, SectionHeader, goBack, styles } from '@/ui/components';
+import { Button, Card, Chip, Row, Screen, SectionHeader, Stepper, goBack, styles, success } from '@/ui/components';
 import { colors, space, type } from '@/ui/theme';
 
 const SOURCES: [string, string][] = [
@@ -14,6 +18,8 @@ const SOURCES: [string, string][] = [
   ['ACSM: Exercise and Fluid Replacement (2007)', 'https://pubmed.ncbi.nlm.nih.gov/17277604/'],
   ['NATA: Fluid Replacement for the Physically Active (2017)', 'https://pubmed.ncbi.nlm.nih.gov/28985128/'],
   ['AAP: Sports Drinks and Energy Drinks for Children and Adolescents (2011)', 'https://pubmed.ncbi.nlm.nih.gov/21624882/'],
+  ['NSCA: Youth Resistance Training Position Statement (2009)', 'https://pubmed.ncbi.nlm.nih.gov/19620931/'],
+  ['AAP: Resistance Training for Children and Adolescents (2020)', 'https://pubmed.ncbi.nlm.nih.gov/32457216/'],
   ['USDA FoodData Central', 'https://fdc.nal.usda.gov/'],
 ];
 
@@ -25,6 +31,21 @@ export default function Settings() {
     profile.weightKg ? String(Math.round((profile.units === 'imperial' ? profile.weightKg * LB_PER_KG : profile.weightKg) * 10) / 10) : '',
   );
   const [confirmReset, setConfirmReset] = useState(false);
+  const [savedKey, setSavedKey] = useState<string | null>(null);
+  const [keyInput, setKeyInput] = useState('');
+
+  useEffect(() => {
+    getApiKey().then(setSavedKey);
+  }, []);
+
+  const saveKey = async () => {
+    const k = keyInput.trim();
+    if (!k) return;
+    await setApiKey(k);
+    setSavedKey(k);
+    setKeyInput('');
+    success();
+  };
 
   const saveWeight = () => {
     if (weight.trim() === '') return updateProfile({ weightKg: undefined });
@@ -94,10 +115,89 @@ export default function Settings() {
         )}
       </Card>
 
+      <SectionHeader title="Training" />
+      <Card style={{ gap: space.md }}>
+        <Text style={type.small}>Goal</Text>
+        <View style={styles.chipWrap}>
+          {(Object.keys(GOAL_LABEL) as Goal[]).map((g) => (
+            <Chip key={g} label={GOAL_LABEL[g]} selected={profile.goal === g} onPress={() => updateProfile({ goal: g })} />
+          ))}
+        </View>
+        <Text style={type.small}>Experience</Text>
+        <View style={styles.chipWrap}>
+          {(Object.keys(LEVEL_LABEL) as Level[]).map((l) => (
+            <Chip key={l} label={LEVEL_LABEL[l]} selected={profile.level === l} onPress={() => updateProfile({ level: l })} />
+          ))}
+        </View>
+        <Text style={type.small}>Equipment (bodyweight is always included)</Text>
+        <View style={styles.chipWrap}>
+          {(Object.keys(EQUIPMENT_LABEL) as Equipment[])
+            .filter((e) => e !== 'bodyweight')
+            .map((e) => (
+              <Chip
+                key={e}
+                label={EQUIPMENT_LABEL[e]}
+                selected={profile.equipment.includes(e)}
+                onPress={() =>
+                  updateProfile({ equipment: profile.equipment.includes(e) ? profile.equipment.filter((x) => x !== e) : [...profile.equipment, e] })
+                }
+              />
+            ))}
+        </View>
+        <Stepper
+          label="Usual workout length"
+          value={`${profile.sessionMin} min`}
+          onDec={() => updateProfile({ sessionMin: Math.max(15, profile.sessionMin - 5) })}
+          onInc={() => updateProfile({ sessionMin: Math.min(90, profile.sessionMin + 5) })}
+        />
+      </Card>
+
+      <SectionHeader title="AI Coach (Claude)" />
+      <Card style={{ gap: space.sm }}>
+        <Text style={type.dim}>
+          Smart Coach works on your phone with no setup. Connect an Anthropic API key to unlock open-ended chat with Claude ({COACH_MODEL}).
+        </Text>
+        <Text style={type.small}>
+          When connected, each coach message sends your question plus a short summary: sport, level, goal, equipment, the next few days of
+          your schedule, muscle readiness, recent workouts and kitchen foods. Your name and body weight are never sent. The key is stored in
+          your phone’s secure keychain. Ask a parent or guardian before connecting a paid account.
+        </Text>
+        {savedKey ? (
+          <>
+            <Text style={[type.body, { color: colors.great }]}>✓ Connected (key {maskKey(savedKey)})</Text>
+            <Button
+              label="Disconnect"
+              variant="danger"
+              onPress={async () => {
+                await setApiKey(null);
+                setSavedKey(null);
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <TextInput
+              value={keyInput}
+              onChangeText={setKeyInput}
+              placeholder="sk-ant-…"
+              placeholderTextColor={colors.textFaint}
+              style={styles.input}
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry
+            />
+            <Button label="Connect" icon="sparkles" onPress={saveKey} disabled={!keyInput.trim()} />
+            <Text style={[type.small, { color: colors.accent }]} onPress={() => Linking.openURL('https://console.anthropic.com/settings/keys')}>
+              Get a key at console.anthropic.com
+            </Text>
+          </>
+        )}
+      </Card>
+
       <SectionHeader title="Data" />
       <Card style={{ gap: space.sm }}>
         <Text style={type.dim}>
-          Everything is stored only on this device. FuelCast has no accounts, no ads, and sends nothing to a server.
+          Everything is stored only on this device. FuelCast has no accounts and no ads. The only network use is the optional AI Coach above.
         </Text>
         <Button
           label="Load sample athlete (demo)"
@@ -122,7 +222,7 @@ export default function Settings() {
       <SectionHeader title="The science" />
       <Card style={{ gap: space.md }}>
         <Text style={type.dim}>
-          FuelCast’s timing and targets come from these position statements. It’s education, not medical advice. Talk to your athletic
+          FuelCast’s fueling, hydration and training rules come from these position statements. It’s education, not medical advice. Talk to your athletic
           trainer, doctor, or a registered dietitian about your own needs.
         </Text>
         {SOURCES.map(([label, url]) => (
@@ -133,7 +233,7 @@ export default function Settings() {
           </Row>
         ))}
       </Card>
-      <Text style={[type.small, { textAlign: 'center', marginTop: space.lg }]}>FuelCast 1.0 · Built for the 2026 GATSA App Development Pitch</Text>
+      <Text style={[type.small, { textAlign: 'center', marginTop: space.lg }]}>FuelCast 2.0 · Built for the 2026 GATSA App Development Pitch</Text>
     </Screen>
   );
 }

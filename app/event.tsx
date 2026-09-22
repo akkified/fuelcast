@@ -7,6 +7,7 @@ import { buildDayPlan } from '@/engine/forecast';
 import { addDays, dateKey, formatClock, formatDateShort, formatDuration, formatRange, weekdayOf, WEEKDAYS_SHORT } from '@/engine/time';
 import type { EventKind, Intensity, TrainingEvent } from '@/engine/types';
 import { newId, useNow, useStore } from '@/state/store';
+import { allWorkouts, findWorkout } from '@/state/useTraining';
 import { Button, Card, Chip, Row, Screen, SectionHeader, Stepper, goBack, styles } from '@/ui/components';
 import { colors, space, type, windowColor, windowIcon } from '@/ui/theme';
 
@@ -21,18 +22,22 @@ const MIN_START = 5 * 60;
 const MAX_START = 21 * 60;
 
 export default function EventEditor() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id?: string; kind?: string; workoutId?: string; title?: string }>();
+  const id = params.id;
   const { state, upsertEvent, deleteEvent } = useStore();
   const today = dateKey(useNow());
   const existing = state.events.find((e) => e.id === id);
 
-  const [kind, setKind] = useState<EventKind>(existing?.kind ?? 'practice');
-  const [title, setTitle] = useState(existing?.title ?? '');
+  const paramKind = KINDS.find((k) => k.kind === params.kind)?.kind;
+  const [kind, setKind] = useState<EventKind>(existing?.kind ?? paramKind ?? 'practice');
+  const [title, setTitle] = useState(existing?.title ?? params.title ?? '');
+  const [workoutId, setWorkoutId] = useState<string | undefined>(existing?.workoutId ?? params.workoutId);
+  const [pickWorkout, setPickWorkout] = useState(false);
   const [oneTime, setOneTime] = useState(!!existing?.date);
   const [days, setDays] = useState<number[]>(existing?.days.length ? existing.days : [weekdayOf(today)]);
   const [date, setDate] = useState(existing?.date ?? today);
   const [startMin, setStartMin] = useState(existing?.startMin ?? 15 * 60 + 30);
-  const [durationMin, setDurationMin] = useState(existing?.durationMin ?? 90);
+  const [durationMin, setDurationMin] = useState(existing?.durationMin ?? (paramKind ? 60 : 90));
   const [intensity, setIntensity] = useState<Intensity>(existing?.intensity ?? 'moderate');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -46,7 +51,9 @@ export default function EventEditor() {
     startMin,
     durationMin,
     intensity,
+    ...(kind === 'lift' || kind === 'conditioning' ? (workoutId ? { workoutId } : {}) : {}),
   };
+  const linked = findWorkout(state, workoutId);
   const preview = buildDayPlan(today, [{ ...draft, days: [], date: today }], state.profile);
   const canSave = oneTime || days.length > 0;
 
@@ -123,6 +130,26 @@ export default function EventEditor() {
           <Chip key={i} label={i[0].toUpperCase() + i.slice(1)} selected={intensity === i} onPress={() => setIntensity(i)} />
         ))}
       </View>
+
+      {(kind === 'lift' || kind === 'conditioning') && (
+        <>
+          <SectionHeader title="Workout plan" />
+          <Card style={{ gap: space.sm }}>
+            <Text style={type.body}>{linked ? `${linked.emoji} ${linked.name}` : 'None: Smart Coach will suggest one on the day'}</Text>
+            <Row style={{ gap: space.sm }}>
+              <Button label={pickWorkout ? 'Done' : 'Choose'} variant="secondary" onPress={() => setPickWorkout((v) => !v)} style={{ flex: 1, paddingVertical: 10 }} />
+              {linked && <Button label="Clear" variant="ghost" onPress={() => setWorkoutId(undefined)} style={{ flex: 1, paddingVertical: 10 }} />}
+            </Row>
+            {pickWorkout && (
+              <View style={styles.chipWrap}>
+                {allWorkouts(state).map((w) => (
+                  <Chip key={w.id} label={`${w.emoji} ${w.name}`} selected={workoutId === w.id} onPress={() => setWorkoutId(w.id)} />
+                ))}
+              </View>
+            )}
+          </Card>
+        </>
+      )}
 
       <SectionHeader title="Your forecast for this session" />
       <Card style={{ gap: space.md }}>

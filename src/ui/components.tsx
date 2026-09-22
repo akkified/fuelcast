@@ -244,6 +244,49 @@ export function MacroRow({ carbs, protein, fat, fiber }: { carbs: number; protei
   );
 }
 
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <View style={styles.segmented} accessibilityRole="tablist">
+      {options.map((o) => {
+        const selected = o.value === value;
+        return (
+          <Pressable
+            key={o.value}
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            onPress={() => {
+              tap();
+              onChange(o.value);
+            }}
+            style={[styles.segment, selected && { backgroundColor: colors.cardRaised }]}
+          >
+            <Text numberOfLines={1} style={[styles.segmentText, selected && { color: colors.text }]}>
+              {o.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+export function ScreenTitle({ title, right }: { title: string; right?: ReactNode }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Text style={type.h1}>{title}</Text>
+      {right}
+    </View>
+  );
+}
+
 export function Row({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[{ flexDirection: 'row', alignItems: 'center' }, style]}>{children}</View>;
 }
@@ -296,4 +339,7 @@ export const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  segmented: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: radius.md, padding: 3, borderWidth: 1, borderColor: colors.border },
+  segment: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: radius.sm + 2 },
+  segmentText: { color: colors.textDim, fontSize: 13, fontWeight: '700' },
 });
