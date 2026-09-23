@@ -2,6 +2,14 @@
 
 All notable changes to FuelCast are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.0] - 2026-09-23
+
+### Added
+- **AI Form Check:** record or pick a video or photo. On-device pose AI (Google MediaPipe Pose Landmarker) finds 33 body points per frame, and FuelCast grades 6 movements (squat, push-up, hip hinge, lunge, plank, jump-landing knee check) with a skeleton overlay, measurements, a score and the top cue. It includes a camera-angle check (calibrated on real footage), form-score history, "Check my form" links on exercises, and an optional Claude "coach's take" on the key frame.
+- **Easier to use:** quick actions on Today (water, workout, form check, coach), a getting-started checklist for new athletes, and a "How FuelCast works" guide.
+- Form scores on Progress; Train reorganized into Plan · Workouts · Form · History.
+- Tests for the form engine, checklist and saved-data migration (85 total).
+
 ## [2.0.0] - 2026-09-22
 
 ### Added

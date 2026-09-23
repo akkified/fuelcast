@@ -7,6 +7,7 @@
 3. **Performance framing, never body framing.** The app talks about fuel, energy, and recovery, never calories or weight loss.
 4. **Fast logging.** Logging a window takes two taps (pick a combo, then "I ate this"), an energy check-in takes one, and a set takes one.
 5. **Explain every recommendation.** Every score, pick and tag comes with a short reason, so athletes learn *why*, not just *what*.
+6. **Nothing is more than two taps from Today.** Quick actions cover the four most common jobs, new athletes get a checklist, and a built-in guide explains every feature.
 
 ## Visual language
 
@@ -28,8 +29,8 @@ Typography uses the system font (SF Pro on iPhone) with a clear scale: 30 / 24 /
 
 | Tab | Question it answers | Sections |
 |---|---|---|
-| **Today** | "What do I do right now?" | Fuel Score, next fuel window, fuel forecast timeline, today's training, a recipe you can cook, water |
-| **Train** | "How should I train?" | Plan (Smart Coach picks, one-tap workout builder, weekly schedule) · Workouts (library and custom) · History |
+| **Today** | "What do I do right now?" | Quick actions (+1 bottle · Workout · Form check · Ask coach), getting-started checklist (new users), Fuel Score, next fuel window, fuel forecast timeline, today's training, a recipe you can cook, water |
+| **Train** | "How should I train?" | Plan (Smart Coach picks, one-tap workout builder, weekly schedule) · Workouts (library and custom) · **Form** (AI Form Check + recent scores) · History |
 | **Fuel** | "What do I eat, cook and buy?" | Kitchen (Fuel Fit ratings) · Recipes · List (shopping) · Water (hydration and sweat test) |
 | **Coach** | "Can I just ask?" | Chat with the AI Coach (Claude), or on-device Smart Coach answers offline |
 | **Progress** | "Is it working?" | Fuel Score trend, streak, fuel vs. energy, windows hit, strength days, muscle readiness |
@@ -44,7 +45,11 @@ flowchart TD
   T -->|tap a window| FW[Fuel window: why · targets · best combos · log]
   T -->|Start| WS[Workout session]
   T -->|Cook something| RD[Recipe detail]
+  T -->|Quick actions| QA[Water · Workout · Form check · Coach]
+  T -->|?| H[How FuelCast works]
   T --- TR[Train] --- FU[Fuel] --- CO[Coach] --- PR[Progress]
+  TR -->|Form| FC[Form Check: film → skeleton → score + cue]
+  WD -->|📸 Check my form| FC
   TR -->|pick / build| WD[Workout detail: readiness · suggested loads]
   WD --> WS
   WD -->|Edit / customize| WE[Workout builder]
@@ -68,6 +73,9 @@ flowchart TD
 | **Recipes** | A "What food do you have?" box (type "eggs, tortillas, cheese"), then Ready / Almost / Shop sections with window tags and missing items. |
 | **Shopping list** | Suggestions from this week's schedule with counts and reasons, typed items, check-off, share, and "Put bought items in my kitchen". |
 | **Coach** | Chat bubbles labeled "AI Coach · Claude" or "Smart Coach · on-device"; replies can carry a workout card (Save / Start), a recipe card and shopping chips (Add to list). There are quick-prompt chips and a clear "Offline mode" badge. |
+| **Form Check** | Pick a movement → a setup card (side or front view, lighting, 2–3 reps) → record, choose a video, or choose a photo → a progress bar while frames are analyzed → score ring, verdict, **annotated frame with the skeleton**, "Focus on this" cue, each measurement with status, value and explanation, a camera-angle warning if needed, and an optional "coach's take" from Claude. |
+| **Quick actions + checklist** | Four large, labeled round buttons under the greeting. The "Get started" card shows progress (x/5), one-line hints, tap-to-go for each item, and "Hide this". |
+| **Help** | "How FuelCast works": seven expandable topics, from Today to Form Check to safety, reachable from the ? icon on Today and from Settings. |
 | **Settings** | Profile, training preferences, the AI Coach key with a plain explanation of exactly what's sent, demo data, reset, and cited sources. |
 
 ## Accessibility
@@ -87,3 +95,4 @@ flowchart TD
 - Insights before enough data → explains exactly what's needed ("rate how your sessions feel…").
 - No API key → Coach runs in offline mode and says so, with a Connect button.
 - AI errors (bad key, rate limit, no internet, refusal) → a friendly message in the chat, never a crash.
+- Form Check can't see joints → says which joints and how to re-film. Wrong camera angle → a yellow note. Pose model offline → says it needs internet the first time. Camera permission denied → offers "Choose a video" instead.

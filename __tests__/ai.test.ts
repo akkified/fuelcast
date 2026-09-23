@@ -1,4 +1,4 @@
-import { askCoach, CoachError, COACH_MODEL, historyToMessages, parseCoachJson } from '../src/ai/coach';
+import { askCoach, askFormFeedback, CoachError, COACH_MODEL, historyToMessages, parseCoachJson } from '../src/ai/coach';
 import { buildContext } from '../src/ai/context';
 import { offlineReply } from '../src/ai/offline';
 import { buildDemoState } from '../src/data/demo';
@@ -150,5 +150,28 @@ describe('context + offline coach', () => {
     expect(offlineReply('What can I cook with my kitchen?', state, now, 1).recipe).toBeDefined();
     expect(offlineReply('What should I do today?', state, now, 1).text.length).toBeGreaterThan(10);
     expect(offlineReply('Make my shopping list for the week', state, now, 1).text).toBeTruthy();
+  });
+});
+
+describe('askFormFeedback', () => {
+  it('sends the annotated frame as an image block and returns the text', async () => {
+    const seen: { url?: string; init?: RequestInit }[] = [];
+    const text = await askFormFeedback({
+      apiKey: 'k',
+      movementName: 'Squat',
+      summary: 'Depth: good (92°)',
+      imageDataUrl: 'data:image/jpeg;base64,QUJD',
+      fetch: fakeFetch(200, message([{ type: 'text', text: 'Great depth. Keep your chest up.' }]), seen),
+    });
+    expect(text).toBe('Great depth. Keep your chest up.');
+    const body = JSON.parse(String(seen[0].init!.body));
+    expect(body.model).toBe('claude-opus-5');
+    expect(body.max_tokens).toBe(4000);
+    const [img, prompt] = body.messages[0].content;
+    expect(img).toEqual({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: 'QUJD' } });
+    expect(prompt.text).toContain('Depth: good');
+  });
+  it('rejects non-image input', async () => {
+    await expect(askFormFeedback({ apiKey: 'k', movementName: 'x', summary: '', imageDataUrl: 'blob:abc' })).rejects.toBeInstanceOf(CoachError);
   });
 });

@@ -7,6 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 
 import { buildDemoState } from '../data/demo';
 import type { Workout } from '../data/workouts';
+import type { CheckStatus, MovementId } from '../engine/form';
 import type { ShoppingItem } from '../engine/shopping';
 import type { DayLog, Profile, TrainingEvent, WindowStatus, WorkoutLog } from '../engine/types';
 
@@ -36,6 +37,21 @@ export interface ChatMessage {
   at: number;
 }
 
+export interface FormCheckRecord {
+  id: string;
+  movement: MovementId;
+  score: number;
+  date: string;
+  at: number;
+  topCue: string;
+  checks: { label: string; status: CheckStatus }[];
+}
+
+export interface UiPrefs {
+  /** The getting-started checklist on Today was dismissed. */
+  checklistDismissed?: boolean;
+}
+
 export interface AppState {
   version: number;
   onboarded: boolean;
@@ -47,6 +63,8 @@ export interface AppState {
   workoutLogs: WorkoutLog[];
   shopping: ShoppingItem[];
   chat: ChatMessage[];
+  formChecks: FormCheckRecord[];
+  ui: UiPrefs;
   demo: boolean;
 }
 
@@ -72,6 +90,8 @@ export const initialState = (): AppState => ({
   workoutLogs: [],
   shopping: [],
   chat: [],
+  formChecks: [],
+  ui: {},
   demo: false,
 });
 
@@ -91,6 +111,8 @@ export function migrate(raw: unknown): AppState | null {
     workoutLogs: s.workoutLogs ?? [],
     shopping: s.shopping ?? [],
     chat: s.chat ?? [],
+    formChecks: s.formChecks ?? [],
+    ui: s.ui ?? {},
   } as AppState;
 }
 
@@ -115,6 +137,8 @@ interface Actions {
   addChat: (msgs: ChatMessage[]) => void;
   patchChat: (id: string, patch: Partial<ChatMessage>) => void;
   clearChat: () => void;
+  addFormCheck: (r: FormCheckRecord) => void;
+  setUi: (patch: Partial<UiPrefs>) => void;
   loadDemo: (today: string, nowMin: number) => void;
   resetAll: () => void;
 }
@@ -210,6 +234,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addChat: (msgs) => setState((s) => ({ ...s, chat: [...s.chat, ...msgs].slice(-MAX_CHAT) })),
       patchChat: (id, patch) => setState((s) => ({ ...s, chat: s.chat.map((m) => (m.id === id ? { ...m, ...patch } : m)) })),
       clearChat: () => setState((s) => ({ ...s, chat: [] })),
+      addFormCheck: (r) => setState((s) => ({ ...s, formChecks: [r, ...s.formChecks].slice(0, 30) })),
+      setUi: (patch) => setState((s) => ({ ...s, ui: { ...s.ui, ...patch } })),
       loadDemo: (today, nowMin) => setState(buildDemoState(today, nowMin)),
       resetAll: () => setState(initialState()),
     }),

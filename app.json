@@ -2,7 +2,7 @@
   "expo": {
     "name": "FuelCast",
     "slug": "fuelcast",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "fuelcast",
@@ -31,7 +31,15 @@
           "backgroundColor": "#0B0F14"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FuelCast uses your photos and videos to check your exercise form on this phone.",
+          "cameraPermission": "FuelCast uses the camera to record a short clip so it can check your exercise form on this phone.",
+          "microphonePermission": "FuelCast records video clips for form checks. Audio isn't used."
+        }
+      ]
     ]
   }
 }

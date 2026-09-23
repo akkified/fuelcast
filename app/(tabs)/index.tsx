@@ -11,6 +11,7 @@ import { addDays, dateKey, formatClock, formatDateLong, formatDuration, formatRa
 import type { FuelWindow } from '@/engine/types';
 import { useNow, useStore } from '@/state/store';
 import { useDay } from '@/state/useDay';
+import { gettingStarted } from '@/state/checklist';
 import { findWorkout, useRecommendation } from '@/state/useTraining';
 import { Button, Card, Pill, ProgressBar, Ring, Row, Screen, SectionHeader, WindowBadge, success } from '@/ui/components';
 import { EnergyPicker } from '@/ui/EnergyCheckIn';
@@ -22,8 +23,24 @@ function greeting(min: number) {
   return 'Good evening';
 }
 
+function QuickAction({ icon, label, color, onPress }: { icon: 'water' | 'barbell' | 'body' | 'sparkles'; label: string; color: string; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => ({ flex: 1, alignItems: 'center', gap: 6, opacity: pressed ? 0.7 : 1 })}
+    >
+      <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: `${color}22`, alignItems: 'center', justifyContent: 'center' }}>
+        <Ionicons name={icon} size={24} color={color} />
+      </View>
+      <Text style={[type.small, { color: colors.text, fontWeight: '600', textAlign: 'center' }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 export default function Today() {
-  const { state, addWater, setEnergy } = useStore();
+  const { state, addWater, setEnergy, setUi } = useStore();
   const now = useNow();
   const today = dateKey(now);
   const nowMin = minutesOfDay(now);
@@ -40,6 +57,8 @@ export default function Today() {
   const tomorrow = eventsOn(addDays(today, 1), state.events)[0];
 
   const openWindow = (w: FuelWindow) => router.push({ pathname: '/window/[id]', params: { id: w.id, date: today } });
+
+  const checklist = gettingStarted(state);
 
   // Training: today's scheduled workout, or Smart Coach's pick.
   const rec = useRecommendation(now);
@@ -60,11 +79,58 @@ export default function Today() {
             {greeting(nowMin)}, {profile.name}
           </Text>
         </View>
-        <Pressable accessibilityLabel="Settings" onPress={() => router.push('/settings')} hitSlop={12}>
-          <Ionicons name="settings-outline" size={24} color={colors.textDim} />
-        </Pressable>
+        <Row style={{ gap: space.lg }}>
+          <Pressable accessibilityLabel="How FuelCast works" onPress={() => router.push('/help')} hitSlop={12}>
+            <Ionicons name="help-circle-outline" size={25} color={colors.textDim} />
+          </Pressable>
+          <Pressable accessibilityLabel="Settings" onPress={() => router.push('/settings')} hitSlop={12}>
+            <Ionicons name="settings-outline" size={24} color={colors.textDim} />
+          </Pressable>
+        </Row>
       </Row>
       {state.demo && <Pill label="Sample athlete · demo data" color={colors.warn} />}
+
+      <Row style={{ paddingVertical: space.xs }}>
+        <QuickAction icon="water" label="+1 bottle" color={colors.water} onPress={() => { success(); addWater(today, profile.bottleMl); }} />
+        <QuickAction
+          icon="barbell"
+          label="Workout"
+          color={colors.accent}
+          onPress={() => (trainPick ? router.push({ pathname: '/workout/session', params: { id: trainPick.id } }) : router.push('/train'))}
+        />
+        <QuickAction icon="body" label="Form check" color={colors.preMeal} onPress={() => router.push('/train?tab=form')} />
+        <QuickAction icon="sparkles" label="Ask coach" color={colors.recovery} onPress={() => router.push('/coach')} />
+      </Row>
+
+      {!state.ui.checklistDismissed && checklist.some((c) => !c.done) && (
+        <Card style={{ gap: space.sm }}>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <Text style={type.h2}>Get started</Text>
+            <Text style={type.small}>
+              {checklist.filter((c) => c.done).length}/{checklist.length} done
+            </Text>
+          </Row>
+          <ProgressBar progress={checklist.filter((c) => c.done).length / checklist.length} />
+          {checklist.map((c) => (
+            <Pressable
+              key={c.id}
+              accessibilityRole="button"
+              accessibilityState={{ checked: c.done }}
+              disabled={c.done}
+              onPress={() => router.push(c.href as '/')}
+              style={{ flexDirection: 'row', gap: space.md, alignItems: 'center', paddingVertical: 4 }}
+            >
+              <Ionicons name={c.done ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={c.done ? colors.great : colors.textFaint} />
+              <View style={{ flex: 1 }}>
+                <Text style={[type.body, c.done && { color: colors.textDim, textDecorationLine: 'line-through' }]}>{c.label}</Text>
+                {!c.done && <Text style={type.small}>{c.hint}</Text>}
+              </View>
+              {!c.done && <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />}
+            </Pressable>
+          ))}
+          <Button label="Hide this" variant="ghost" onPress={() => setUi({ checklistDismissed: true })} style={{ paddingVertical: 6 }} />
+        </Card>
+      )}
 
       <Card style={{ flexDirection: 'row', gap: space.lg, alignItems: 'center' }}>
         <Ring progress={score / 100} size={104} stroke={10}>
@@ -87,7 +153,7 @@ export default function Today() {
             <>
               <Text style={type.label}>Welcome</Text>
               <Text style={type.h2}>Let’s build your forecast</Text>
-              <Text style={type.dim}>Add a practice or game below to get started.</Text>
+              <Text style={type.dim}>Add a practice or game to get your first forecast.</Text>
             </>
           ) : plan.length > 0 ? (
             <>
@@ -111,7 +177,7 @@ export default function Today() {
         </View>
       </Card>
 
-      {state.events.length === 0 && (
+      {state.events.length === 0 && (state.ui.checklistDismissed || checklist.every((c) => c.done)) && (
         <Card style={{ gap: space.md }}>
           <Text style={type.h2}>Add your first practice or game</Text>
           <Text style={type.dim}>FuelCast builds your forecast from your schedule. It takes about 20 seconds.</Text>

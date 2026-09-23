@@ -214,18 +214,9 @@ function errorFor(status: number, body: ApiErrorBody | null): CoachError {
 
 const RETRYABLE = new Set([408, 409, 429, 500, 502, 503, 504, 529]);
 
-export async function askCoach({ apiKey, history, message, context, fetch: fetchImpl = fetch }: AskOptions): Promise<CoachReply> {
-  const body = JSON.stringify({
-    model: COACH_MODEL,
-    max_tokens: 16000,
-    system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-    messages: [
-      ...historyToMessages(history),
-      { role: 'user', content: `<athlete_context>\n${context}\n</athlete_context>\n\n${message}` },
-    ],
-    output_config: { effort: 'low', format: { type: 'json_schema', schema: RESPONSE_SCHEMA } },
-    fallbacks: 'default',
-  });
+/** POST to the Messages API with retries and friendly errors. Returns the parsed response. */
+async function callClaude(apiKey: string, payload: object, fetchImpl: typeof fetch): Promise<ApiResponse> {
+  const body = JSON.stringify({ model: COACH_MODEL, max_tokens: 16000, fallbacks: 'default', ...payload });
   const headers = {
     'content-type': 'application/json',
     'x-api-key': apiKey,
@@ -262,17 +253,71 @@ export async function askCoach({ apiKey, history, message, context, fetch: fetch
   } catch {
     throw new CoachError('The coach sent a reply I couldn’t read. Try again.');
   }
-
   if (data.stop_reason === 'refusal') {
     throw new CoachError('The coach can’t help with that one. For anything medical, talk to your athletic trainer or doctor.');
   }
   if (data.stop_reason === 'max_tokens') throw new CoachError('That answer ran long and got cut off. Try a more specific question.');
+  return data;
+}
 
-  const text = (data.content ?? [])
+const textOf = (data: ApiResponse) =>
+  (data.content ?? [])
     .filter((b) => b.type === 'text' && typeof b.text === 'string')
     .map((b) => b.text)
     .join('');
-  return { ...parseCoachJson(text), content: data.content };
+
+export async function askCoach({ apiKey, history, message, context, fetch: fetchImpl = fetch }: AskOptions): Promise<CoachReply> {
+  const data = await callClaude(
+    apiKey,
+    {
+      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+      messages: [
+        ...historyToMessages(history),
+        { role: 'user', content: `<athlete_context>\n${context}\n</athlete_context>\n\n${message}` },
+      ],
+      output_config: { effort: 'low', format: { type: 'json_schema', schema: RESPONSE_SCHEMA } },
+    },
+    fetchImpl,
+  );
+  return { ...parseCoachJson(textOf(data)), content: data.content };
+}
+
+export const FORM_SYSTEM_PROMPT = `You are FuelCast Coach reviewing a high-school athlete's exercise form from one still frame. The app has already measured joint angles on the phone; the skeleton overlay on the image shows what it detected.
+- Give 2–4 short, specific, encouraging coaching cues in plain language (under 90 words total), most important first.
+- Base them on what the image and the measurements show. If the image is unclear, say so instead of guessing.
+- Never diagnose injuries or comment on body size or shape. If anything suggests pain or injury risk, advise stopping and checking with an athletic trainer.`;
+
+/** Ask Claude to explain a form-check result, using the annotated key frame (JPEG data URL). */
+export async function askFormFeedback(opts: {
+  apiKey: string;
+  movementName: string;
+  summary: string;
+  imageDataUrl: string;
+  fetch?: typeof fetch;
+}): Promise<string> {
+  const m = opts.imageDataUrl.match(/^data:(image\/(?:jpeg|png));base64,(.+)$/);
+  if (!m) throw new CoachError('That frame couldn’t be sent to the coach.');
+  const data = await callClaude(
+    opts.apiKey,
+    {
+      max_tokens: 4000,
+      system: FORM_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } },
+            { type: 'text', text: `Movement: ${opts.movementName}\nOn-device measurements:\n${opts.summary}\n\nWhat should I focus on?` },
+          ],
+        },
+      ],
+      output_config: { effort: 'low' },
+    },
+    opts.fetch ?? fetch,
+  );
+  const text = textOf(data).trim();
+  if (!text) throw new CoachError('The coach didn’t send any feedback. Try again.');
+  return text;
 }
 
 /** Kitchen foods as names for the context summary. */

@@ -2,6 +2,7 @@ import { Text, View } from 'react-native';
 
 import { MUSCLE_LABEL } from '@/data/exercises';
 import { dayContext, MUSCLES } from '@/engine/coach';
+import { MOVEMENTS } from '@/engine/form';
 import { dateKey } from '@/engine/time';
 import { useNow, useStore } from '@/state/store';
 import { useRecommendation } from '@/state/useTraining';
@@ -46,6 +47,33 @@ function TrainingProgress() {
           );
         })}
         <Text style={type.small}>Based on your logged workouts, practices and games. Fatigue fades by about half each day.</Text>
+      </Card>
+
+      <SectionHeader title="Form scores" />
+      <Card style={{ gap: space.sm }}>
+        {state.formChecks.length === 0 ? (
+          <Text style={type.dim}>No form checks yet. Try one from Train → Form. It takes about 30 seconds.</Text>
+        ) : (
+          MOVEMENTS.map((m) => {
+            const checks = state.formChecks.filter((c) => c.movement === m.id);
+            if (checks.length === 0) return null;
+            const latest = checks[0].score;
+            const first = checks[checks.length - 1].score;
+            return (
+              <View key={m.id} style={{ gap: 4 }}>
+                <Row style={{ justifyContent: 'space-between' }}>
+                  <Text style={type.body}>
+                    {m.emoji} {m.name}
+                  </Text>
+                  <Text style={[type.small, { color: latest >= 85 ? colors.great : latest >= 65 ? colors.warn : colors.avoid }]}>
+                    {latest}/100{checks.length > 1 ? ` · ${latest - first >= 0 ? '+' : ''}${latest - first} since first` : ''}
+                  </Text>
+                </Row>
+                <ProgressBar progress={latest / 100} color={latest >= 85 ? colors.great : latest >= 65 ? colors.warn : colors.avoid} height={6} />
+              </View>
+            );
+          })
+        )}
       </Card>
     </>
   );

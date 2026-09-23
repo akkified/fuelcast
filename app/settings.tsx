@@ -20,6 +20,7 @@ const SOURCES: [string, string][] = [
   ['AAP: Sports Drinks and Energy Drinks for Children and Adolescents (2011)', 'https://pubmed.ncbi.nlm.nih.gov/21624882/'],
   ['NSCA: Youth Resistance Training Position Statement (2009)', 'https://pubmed.ncbi.nlm.nih.gov/19620931/'],
   ['AAP: Resistance Training for Children and Adolescents (2020)', 'https://pubmed.ncbi.nlm.nih.gov/32457216/'],
+  ['Google MediaPipe Pose Landmarker (on-device pose model)', 'https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker'],
   ['USDA FoodData Central', 'https://fdc.nal.usda.gov/'],
 ];
 
@@ -197,7 +198,7 @@ export default function Settings() {
       <SectionHeader title="Data" />
       <Card style={{ gap: space.sm }}>
         <Text style={type.dim}>
-          Everything is stored only on this device. FuelCast has no accounts and no ads. The only network use is the optional AI Coach above.
+          Everything is stored only on this device. FuelCast has no accounts and no ads. The only network use is the optional AI Coach above, plus a one-time download of the Form Check pose model. Videos are analyzed on the phone.
         </Text>
         <Button
           label="Load sample athlete (demo)"
@@ -219,6 +220,8 @@ export default function Settings() {
         />
       </Card>
 
+      <Button label="How FuelCast works" icon="help-circle-outline" variant="secondary" onPress={() => router.push('/help')} />
+
       <SectionHeader title="The science" />
       <Card style={{ gap: space.md }}>
         <Text style={type.dim}>
@@ -233,7 +236,7 @@ export default function Settings() {
           </Row>
         ))}
       </Card>
-      <Text style={[type.small, { textAlign: 'center', marginTop: space.lg }]}>FuelCast 2.0 · Built for the 2026 GATSA App Development Pitch</Text>
+      <Text style={[type.small, { textAlign: 'center', marginTop: space.lg }]}>FuelCast 3.0 · Built for the 2026 GATSA App Development Pitch</Text>
     </Screen>
   );
 }

@@ -132,6 +132,8 @@ export function buildDemoState(today: string, nowMin: number): AppState {
     workoutLogs,
     shopping: [],
     chat: [],
+    formChecks: [],
+    ui: { checklistDismissed: true },
     demo: true,
   };
 }

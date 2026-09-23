@@ -26,11 +26,13 @@ FuelCast uses **Expo SDK 57** (React Native 0.86, React 19) with **TypeScript in
 │  Engine layer: src/engine/ (pure TypeScript, 0 dependencies)  │
 │  forecast · fuelFit · targets · hydration · insights · time   │
 │  coach (readiness, ranking, generator, progression)           │
-│  recipes · shopping                                           │
+│  recipes · shopping · form (pose → joint angles → grade)      │
 │  Deterministic functions → easy to unit-test (Jest)           │
 ├──────────────────────────────────────────────────────────────┤
 │  AI layer: src/ai/ (Claude client, context, offline coach,    │
 │  Keychain key storage)                                        │
+│  Vision layer: src/form/ (MediaPipe pose in WebView/iframe,   │
+│  frame extraction)                                            │
 ├──────────────────────────────────────────────────────────────┤
 │  Data: foods (59), exercises (56), starter workouts (20),     │
 │  recipes (20), demo athlete                                   │
@@ -202,6 +204,32 @@ It looks up the last session with weight for that exercise. If every set hit its
 | Key | Entered by the athlete in Settings and stored in the iOS **Keychain** (`expo-secure-store`); never in the app-state JSON. |
 | Offline | Without a key, the Coach tab answers the four common intents on-device with the engines above: plan today, build a workout, cook from the kitchen, plan shopping. |
 
+### 5.11 AI Form Check
+
+```mermaid
+flowchart LR
+  A[Record / pick clip<br/>expo-image-picker] --> B[12 frames, 480 px<br/>expo-video-thumbnails + image-manipulator]
+  B --> C[Hidden WebView<br/>MediaPipe Pose Landmarker<br/>GPU → CPU fallback]
+  C -->|33 landmarks + skeleton JPEG per frame| D[form.ts engine]
+  D --> E[Key frame · joint angles · checks · score · top cue]
+  E -. optional .-> F[Claude vision: coach's take on the key frame]
+```
+
+| Piece | Design |
+|---|---|
+| Pose model | Google **MediaPipe Pose Landmarker (full)** in WebAssembly, loaded from jsDelivr and Google's model bucket the first time, then cached. It runs **on the phone**; no video is uploaded. |
+| Why a WebView | Expo Go can't load custom native ML modules. A hidden `react-native-webview` runs the same MediaPipe web build that works in Safari, so the app runs on a real iPhone without Xcode. On the web build, the same page runs in an iframe. |
+| Frames | Native: 12 evenly spaced thumbnails from the first 10 s (`expo-video-thumbnails`), resized to 480 px JPEG. Web: the page samples the `<video>` itself. Photos work too. |
+| Protocol | JSON messages (`frame` / `video` → `frame` … `done` / `error`), with a 30 s per-frame timeout and a 60 s model-load timeout, and friendly errors. |
+| Key frame | Squat: smallest knee angle. Push-up: smallest elbow angle. Hinge: most torso lean. Lunge: lowest hips. Landing: lowest hips relative to ankles. Plank: the median body-line frame (robust to one odd frame). |
+| Measurements | Pixel-space angles (normalized landmarks × image size, so there's no aspect distortion). The camera side with the more visible joints is used. Joints below 50% visibility aren't graded, and the app says what it couldn't see. |
+| Rules | Squat: depth (knee ≤ 100° or hip at or below knee) and chest lean (≤ 45°). Push-up: body line (shoulder–hip–ankle ≥ 165°, sag vs. pike) and elbow depth (≤ 100°). Hinge: torso lean ≥ 45° and knees 135–175°. Lunge: front knee 75–110° and torso ≤ 20°. Plank: body line ≥ 165° and elbows under shoulders. Jump landing (front view): **knee-to-ankle separation ratio** ≥ 0.8 (below it, the knees cave in) and hip drop ≥ 15% (a soft landing; videos only). |
+| Camera-angle check | Shoulder and hip width ÷ torso length, calibrated on real photos (side ≈ 0.15, front/back ≈ 0.40). If a side-view movement is filmed head-on (or the reverse), the result says so and treats the grade as rough. |
+| Score | good = 100, needs work = 60, fix = 20, averaged; plus a verdict and the single most useful cue. |
+| Claude (optional) | Sends one annotated key frame (JPEG, about 25 KB) plus the measurements to `claude-opus-5` as an image block, which returns 2–4 short cues. Requires the athlete's key. |
+
+**Validation:** 15 unit tests use synthetic poses with known angles (good and bad squats, a sagging push-up, a hinge vs. a "squatty" hinge, a piked plank, a valgus landing, stiff vs. soft landings, the camera-angle check, and missing joints). The full pipeline was also run in a browser on real public-domain footage from Wikimedia Commons: a side-view squat photo (graded "almost parallel", 101°) and a back-view squat video (12 frames, bottom found at 2.1 s, correctly flagged as the wrong camera angle).
+
 > **Production note:** a store release would route AI requests through a small backend (so no API key lives on the phone) and add per-user rate limits. The client code already isolates the call in `askCoach()`, so swapping the endpoint is a one-line change.
 
 ## 6. Persistence and privacy
@@ -209,23 +237,24 @@ It looks up the last session with weight for that exercise. If every set hit its
 - The whole app state is one JSON document saved to **AsyncStorage** (iOS: app-sandboxed native storage; web: localStorage) after every change.
 - The saved state is version-checked on load. Corrupt or incompatible data falls back to a clean start instead of crashing.
 - Screens don't render until saved data has loaded, so there's no flash of default values.
-- **Nothing leaves the device** except optional AI Coach messages (to api.anthropic.com), which the athlete turns on with their own key. No accounts, no analytics.
+- **Nothing leaves the device** except optional AI Coach messages (to api.anthropic.com), which the athlete turns on with their own key. Form Check videos are analyzed on the phone; only the pose library and model are downloaded (once). No accounts, no analytics.
 
 ## 7. Quality
 
 | Check | How |
 |---|---|
 | Type safety | `tsc --noEmit` in strict mode, no `any` |
-| Logic | 67 Jest unit tests: forecast timing and collisions, Fuel Fit scoring and combo search, sweat math, insights, readiness, coach modes, workout generator, progression, recipe tags and matching, shopping suggestions, AI request/response handling (with a mocked network) |
+| Logic | 85 Jest unit tests: forecast timing and collisions, Fuel Fit scoring and combo search, sweat math, insights, readiness, coach modes, workout generator, progression, recipe tags and matching, shopping suggestions, AI request/response handling (with a mocked network), form-check geometry and rules, getting-started checklist, saved-data migration |
 | Native build | `npx expo export --platform ios` compiles the iOS bundle |
 | Dependency health | `npx expo-doctor`: 21/21 checks pass |
 | CI | GitHub Actions runs type-check and tests on every push and pull request |
 
 ## 8. Roadmap
 
-1. **Push reminders** ("Top-off snack in 10 minutes") with `expo-notifications`
-2. **Coach backend**: a small server so the AI Coach works without a personal API key
-3. **Team mode**: coaches share the schedule and assign workouts with a code
-4. **School-menu import**: pull the cafeteria menu so lunch picks are specific
-5. **Apple Health**: import workouts and heart-rate data automatically
-6. **Allergy and dietary filters** (vegetarian, dairy-free, nut-free) in combos, recipes and the shopping list
+1. **Live form feedback**: real-time pose tracking from the camera with rep counting (needs a native camera module in a custom build)
+2. **Push reminders** ("Top-off snack in 10 minutes") with `expo-notifications`
+3. **Coach backend**: a small server so the AI Coach works without a personal API key
+4. **Team mode**: coaches share the schedule and assign workouts with a code
+5. **School-menu import**: pull the cafeteria menu so lunch picks are specific
+6. **Apple Health**: import workouts and heart-rate data automatically
+7. **Allergy and dietary filters** (vegetarian, dairy-free, nut-free) in combos, recipes and the shopping list

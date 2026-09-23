@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { EXERCISE_BY_ID, type Equipment } from '@/data/exercises';
 import { displayWeight, suggestLoad } from '@/engine/coach';
+import { movementForExercise } from '@/engine/form';
 import { LB_PER_KG } from '@/engine/hydration';
 import { dateKey } from '@/engine/time';
 import type { SetLog, Units } from '@/engine/types';
@@ -172,6 +173,15 @@ export default function Session() {
             </Text>
             {load && <Text style={[type.small, { color: colors.great }]}>{load.note}</Text>}
             <Text style={[type.small, { color: colors.textFaint }]}>💡 {ex.cue}</Text>
+            {movementForExercise(ex.id) && (
+              <Pressable
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={() => router.push({ pathname: '/form', params: { movement: movementForExercise(ex.id)!.id } })}
+              >
+                <Text style={[type.small, { color: colors.accent, fontWeight: '700' }]}>📸 Film a set and check my form</Text>
+              </Pressable>
+            )}
             {Array.from({ length: it.sets }, (_, k) => {
               const i = first + k;
               const s = sets[i];

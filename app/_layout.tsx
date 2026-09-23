@@ -59,6 +59,8 @@ function AppStack() {
       <Stack.Screen name="window/[id]" options={{ presentation: 'modal', title: 'Fuel window', headerLeft: CloseButton }} />
       <Stack.Screen name="event" options={{ presentation: 'modal', title: 'Session', headerLeft: CloseButton }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+      <Stack.Screen name="form" options={{ title: 'Form Check' }} />
+      <Stack.Screen name="help" options={{ title: 'How FuelCast works' }} />
     </Stack>
   );
 }

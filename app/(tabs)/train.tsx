@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { GOAL_LABEL, type Goal } from '@/data/workouts';
@@ -10,9 +10,10 @@ import { allWorkouts, useRecommendation } from '@/state/useTraining';
 import { Button, Card, Chip, Pill, Row, Screen, ScreenTitle, SectionHeader, Segmented, Stepper, styles, success } from '@/ui/components';
 import { colors, space, type } from '@/ui/theme';
 import { SmartCoachCard, WorkoutCard } from '@/ui/WorkoutCard';
+import { FormView } from '@/views/FormView';
 import { ScheduleView } from '@/views/ScheduleView';
 
-type Tab = 'plan' | 'workouts' | 'history';
+type Tab = 'plan' | 'workouts' | 'form' | 'history';
 const FOCI: Focus[] = ['full', 'upper', 'lower', 'power', 'core', 'conditioning', 'mobility'];
 
 function Builder() {
@@ -138,8 +139,16 @@ function History() {
   );
 }
 
+const TABS: Tab[] = ['plan', 'workouts', 'form', 'history'];
+
 export default function Train() {
+  const params = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<Tab>('plan');
+  // Deep links (e.g. the Form Check quick action on Today).
+  useEffect(() => {
+    const t = TABS.find((x) => x === params.tab);
+    if (t) setTab(t);
+  }, [params.tab]);
   const now = useNow();
   const rec = useRecommendation(now);
 
@@ -152,6 +161,7 @@ export default function Train() {
         options={[
           { value: 'plan', label: 'Plan' },
           { value: 'workouts', label: 'Workouts' },
+          { value: 'form', label: 'Form' },
           { value: 'history', label: 'History' },
         ]}
       />
@@ -164,6 +174,7 @@ export default function Train() {
         </>
       )}
       {tab === 'workouts' && <Library />}
+      {tab === 'form' && <FormView />}
       {tab === 'history' && <History />}
     </Screen>
   );

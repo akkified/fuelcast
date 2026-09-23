@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import { EQUIPMENT_LABEL, EXERCISE_BY_ID, MUSCLE_LABEL, type Muscle } from '@/data/exercises';
 import { GOAL_LABEL, LEVEL_LABEL, workoutEquipment } from '@/data/workouts';
 import { displayWeight, readiness, suggestLoad, workoutReadiness } from '@/engine/coach';
+import { movementForExercise } from '@/engine/form';
 import { dateKey } from '@/engine/time';
 import { newId, useNow, useStore } from '@/state/store';
 import { findWorkout } from '@/state/useTraining';
@@ -107,6 +108,17 @@ export default function WorkoutDetail() {
                 </Text>
               )}
               {open === key && <Text style={[type.dim, { marginTop: 4 }]}>💡 {ex.cue}</Text>}
+              {movementForExercise(ex.id) && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Check my ${ex.name} form`}
+                  hitSlop={8}
+                  onPress={() => router.push({ pathname: '/form', params: { movement: movementForExercise(ex.id)!.id } })}
+                  style={{ alignSelf: 'flex-start', marginTop: 4 }}
+                >
+                  <Text style={[type.small, { color: colors.accent, fontWeight: '700' }]}>📸 Check my form</Text>
+                </Pressable>
+              )}
             </Card>
           </Pressable>
         );

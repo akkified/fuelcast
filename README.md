@@ -6,6 +6,7 @@ FuelCast is an iPhone app for high-school athletes that combines the three thing
 
 - **When and what to eat:** a *fuel forecast* built from your practice and game schedule
 - **How to train:** a gym planner with 20 starter workouts, custom workouts, live set logging, and a **Smart Coach** that recommends the right workout for today
+- **How you move:** **AI Form Check** films a few reps, finds 33 body points on the phone, measures your joint angles, and tells you the one thing to fix
 - **What to cook and buy:** recipes from the food you already have, and a shopping list built from your week
 
 An optional **AI Coach powered by Claude** ties it together: ask anything, and it answers with your schedule, muscle readiness and kitchen in mind. It can hand you a workout you save with one tap, a recipe, or shopping items.
@@ -14,7 +15,7 @@ An optional **AI Coach powered by Claude** ties it together: ask anything, and i
 
 <p align="center">
   <img src="docs/screenshots/01-today.png" width="180" alt="Today" />
-  <img src="docs/screenshots/04-train-plan.png" width="180" alt="Train: Smart Coach" />
+  <img src="docs/screenshots/18-form-result.png" width="180" alt="AI Form Check" />
   <img src="docs/screenshots/09-recipes.png" width="180" alt="Recipes from your kitchen" />
   <img src="docs/screenshots/11-coach.png" width="180" alt="Coach chat" />
 </p>
@@ -37,11 +38,14 @@ More than 8 million U.S. students play high-school sports. Almost none have a sp
 | *When should I eat?* | **Fuel Forecast:** pre-game meal (3–4 h before), top-off snack (30–60 min), in-session fuel, and recovery (within 1 h), timed around every session |
 | *What should I eat right now?* | **Fuel Fit:** the best 1–3 item combos from *your* kitchen, scored 0–100 against sports-nutrition targets |
 | *What should I train today?* | **Smart Coach:** tracks muscle readiness from your lifts *and* practices, knows when games are, and ranks workouts with reasons ("Game tomorrow: keep it light") |
+| *Is my form right?* | **AI Form Check:** record or pick a clip; on-device pose AI (Google MediaPipe) finds 33 body points per frame, finds the key moment (e.g. the bottom of the squat), measures angles, and grades 6 movements (squat, push-up, hip hinge, lunge, plank, and a jump-landing knee check), with a skeleton overlay. The video never leaves the phone. Optional Claude feedback on the frame. |
 | *How do I run a workout?* | **Gym planner:** 56 exercises, 20 starter workouts, a custom builder, a one-tap generator, and a live logger with rest timer and automatic weight progression |
 | *What can I cook?* | **Recipes:** 20 teen-friendly recipes matched to your kitchen (ready / almost / shop), each tagged by which fuel window it fits |
 | *What do I buy?* | **Shopping list:** built from this week's schedule plus missing recipe ingredients; bought items move into your kitchen |
 | *Can I just ask someone?* | **AI Coach (Claude):** chat that knows your context and returns structured workouts, recipes and shopping items. It also works **offline** with on-device answers |
 | *Is it working?* | **Progress:** Fuel Score, streaks, fuel-vs-energy insight, strength days vs. youth guidelines, muscle readiness |
+
+**Easy to use:** four one-tap quick actions on Today (water, workout, form check, coach), a getting-started checklist for new athletes, a built-in "How FuelCast works" guide, and every recommendation explained in plain English.
 
 **Teen-safe by design:** no calorie counting, no weight goals, youth resistance-training guidelines built in, no supplements or energy drinks, and a coach that refers injuries to athletic trainers. All data stays on the phone.
 
@@ -55,8 +59,10 @@ More than 8 million U.S. students play high-school sports. Almost none have a sp
 | **Smart Coach** | **Workout + readiness** | **Live workout logger** | **Custom workout builder** |
 | ![](docs/screenshots/08-kitchen.png) | ![](docs/screenshots/09-recipes.png) | ![](docs/screenshots/10-recipe.png) | ![](docs/screenshots/16-shopping.png) |
 | **Kitchen + Fuel Fit** | **Recipes from your food** | **Recipe detail** | **Shopping list** |
-| ![](docs/screenshots/11-coach.png) | ![](docs/screenshots/12-progress.png) | ![](docs/screenshots/13-progress-training.png) | ![](docs/screenshots/14-hydrate.png) |
-| **Coach chat** | **Progress** | **Muscle readiness** | **Hydration + sweat test** |
+| ![](docs/screenshots/17-form-pick.png) | ![](docs/screenshots/18-form-result.png) | ![](docs/screenshots/19-form-checks.png) | ![](docs/screenshots/21-today-new-user.png) |
+| **Form Check: pick a movement** | **Form Check: result + skeleton** | **Form Check: measurements** | **New user: quick actions + checklist** |
+| ![](docs/screenshots/11-coach.png) | ![](docs/screenshots/12-progress.png) | ![](docs/screenshots/13-progress-training.png) | ![](docs/screenshots/20-help.png) |
+| **Coach chat** | **Progress** | **Muscle readiness + form scores** | **How FuelCast works** |
 
 ## Run it on your iPhone (5 minutes)
 
@@ -86,6 +92,9 @@ flowchart LR
   W --> R
   W --> SH[Shopping planner]
   R --> SH
+  V[Video / photo] --> PD[On-device pose AI: 33 landmarks per frame]
+  PD --> FE[Form engine: key frame, joint angles, camera-angle check]
+  FE --> T
   L[Workout logs] --> RD[Muscle readiness]
   S --> RD
   RD --> SC[Smart Coach ranking + generator]
@@ -107,6 +116,9 @@ Every rule lives in a pure TypeScript **engine** (`src/engine/`), tested with Je
 | `shopping.ts` | Weekly staple suggestions, recipe gaps, de-duplication, food matching |
 | `hydration.ts` | Sweat-rate test, itemized daily fluid goal |
 | `insights.ts` | Fuel Score, streaks, fueled-vs-unfueled energy comparison |
+| `form.ts` | Form Check grading: picks the key frame, measures joint angles, applies movement rules, detects wrong camera angles |
+
+**Form Check** (`src/form/`) runs Google's **MediaPipe Pose Landmarker** inside a hidden WebView (an iframe on web), so pose detection happens on the phone. Only the library and model are downloaded, once. The pure-TypeScript `form.ts` engine does the grading and is unit-tested with synthetic poses; it was also checked against real photos and video.
 
 The **AI Coach** (`src/ai/`) calls the Claude Messages API (`claude-opus-5`) with **structured outputs**. The JSON schema restricts workout exercises to IDs from our library, so every AI workout can be saved and run in the planner. Details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
@@ -118,7 +130,8 @@ The **AI Coach** (`src/ai/`) calls the Claude Messages API (`claude-opus-5`) wit
 | Storage | AsyncStorage (app data), iOS Keychain via expo-secure-store (API key) |
 | AI | Claude API (`claude-opus-5`), structured JSON outputs, server-side refusal fallback |
 | Graphics | react-native-svg |
-| Quality | 67 Jest unit tests · GitHub Actions CI · `expo-doctor` 21/21 |
+| Computer vision | Google MediaPipe Pose Landmarker (on-device, WebAssembly) · react-native-webview · expo-image-picker · expo-video-thumbnails |
+| Quality | 85 Jest unit tests · GitHub Actions CI · `expo-doctor` 21/21 |
 
 ## Project structure
 
@@ -129,12 +142,15 @@ app/                     Screens (file = route)
   workout/[id].tsx       Workout detail + readiness + suggested loads
   workout/edit.tsx       Custom workout builder
   workout/session.tsx    Live logger with rest timer
+  form.tsx               AI Form Check (record/pick → pose → grade)
+  help.tsx               How FuelCast works
   recipe/[id].tsx        Recipe detail, shopping, log to a window
   event.tsx              Add/edit a session (link a workout)
   settings.tsx           Profile, training prefs, AI Coach key, data, sources
 src/engine/              Pure logic (tested)
 src/data/                Foods, exercises, starter workouts, recipes, demo athlete
 src/ai/                  Claude client, context builder, offline coach, key storage
+src/form/                Pose detector (WebView/iframe + MediaPipe), frame extraction
 src/state/               Store (Context + AsyncStorage) and hooks
 src/views/               Tab sections (Kitchen, Recipes, Shopping, Water, Schedule, Insights)
 src/ui/                  Theme and shared components

@@ -12,6 +12,7 @@
 - **Under-fueling is a real health risk.** The 2023 International Olympic Committee consensus statement describes *Relative Energy Deficiency in Sport (REDs)*: not eating enough for the training load harms bone health, hormones, growth, and performance. Adolescents are specifically at risk.⁶
 - **Expert help is out of reach.** Sports dietitians are standard in college and pro sports but rare at the high-school level, so most teens rely on guesswork, social media, or nothing.
 - **Energy drinks are marketed to teens.** The American Academy of Pediatrics states that energy drinks are not appropriate for children and adolescents.⁷
+- **Bad movement patterns are an injury risk.** Knees collapsing inward (dynamic valgus) on landing predicted ACL injury in a prospective study of female athletes,¹² and a simple front-view video "drop-jump" test that measures how far apart the knees stay compared with the ankles is used to screen for it.¹³ Without a coach watching every rep, athletes don't know how they move.
 - **Strength training helps teens, when it's done right.** The NSCA and AAP both support resistance training for adolescents. Their guidance: qualified supervision, technique first, 1–3 sets of 6–15 reps, 2–3 non-consecutive days a week, and progression in small steps.¹⁰,¹¹ Teens without a coach usually don't get that structure, and they rarely plan lifting around their game schedule.
 
 ## 2. Target audience
@@ -56,6 +57,8 @@
 | Small, steady load increases (FuelCast: ~5% when every rep was completed at a manageable effort) | NSCA 2009¹⁰ |
 | Spotter for barbell pressing; stop and see an athletic trainer for pain | NSCA 2009¹⁰; AAP 2020¹¹ |
 | No hard leg work or conditioning the day before a game (a taper) | FuelCast coaching rule, a conservative, common in-season practice |
+| Form Check: knee-to-ankle separation ratio on landing (below ~0.8 = knees caving in) | Noyes et al. 2005¹³; Hewett et al. 2005¹² |
+| Form Check: squat depth, torso angle, push-up body line, hinge and lunge angles | Common strength-coaching cues, measured with on-device pose estimation (MediaPipe / BlazePose¹⁴). Thresholds are coaching guides, not clinical standards. |
 
 FuelCast uses the **conservative, general end** of each range because it serves teens without individual supervision. It's education, and the app says so on the welcome screen and in Settings.
 
@@ -67,7 +70,8 @@ FuelCast uses the **conservative, general end** of each range because it serves 
 4. **No food is "bad."** Foods are rated only for *timing* ("Not now," not "unhealthy"). Chips before practice are "Not now"; they aren't shamed.
 5. **A clear medical disclaimer** that points athletes to their athletic trainer, doctor, or a registered dietitian.
 6. **Sample data is always labeled.** The demo athlete shows a "Sample athlete · demo data" badge on every screen that uses it.
-7. **Responsible AI.** The AI Coach is optional and off by default. It gets a minimal context (no name or weight), follows teen-safe rules in its system prompt, can only build workouts from our vetted exercise library, and tells athletes to see an athletic trainer or doctor about pain, injuries or eating concerns. Every AI message is labeled "AI Coach · Claude", and every on-device answer is labeled "Smart Coach · on-device".
+7. **Private computer vision.** Form Check analyzes video on the phone. Clips aren't uploaded or stored; only scores and cues are saved. It's labeled as a 2D coaching aid, not a medical assessment, and it tells athletes when the camera angle makes a grade unreliable.
+8. **Responsible AI.** The AI Coach is optional and off by default. It gets a minimal context (no name or weight), follows teen-safe rules in its system prompt, can only build workouts from our vetted exercise library, and tells athletes to see an athletic trainer or doctor about pain, injuries or eating concerns. Every AI message is labeled "AI Coach · Claude", and every on-device answer is labeled "Smart Coach · on-device".
 
 ## 6. References
 
@@ -82,5 +86,8 @@ FuelCast uses the **conservative, general end** of each range because it serves 
 9. U.S. Department of Agriculture, Agricultural Research Service. *FoodData Central.* https://fdc.nal.usda.gov/
 10. Faigenbaum AD, Kraemer WJ, Blimkie CJR, et al. Youth resistance training: updated position statement paper from the National Strength and Conditioning Association. *J Strength Cond Res.* 2009;23(5 Suppl):S60-S79. https://pubmed.ncbi.nlm.nih.gov/19620931/
 11. Stricker PR, Faigenbaum AD, McCambridge TM; Council on Sports Medicine and Fitness. Resistance training for children and adolescents. *Pediatrics.* 2020;145(6):e20201011. https://pubmed.ncbi.nlm.nih.gov/32457216/
+12. Hewett TE, Myer GD, Ford KR, et al. Biomechanical measures of neuromuscular control and valgus loading of the knee predict anterior cruciate ligament injury risk in female athletes: a prospective study. *Am J Sports Med.* 2005;33(4):492-501.
+13. Noyes FR, Barber-Westin SD, Fleckenstein C, Walsh C, West J. The drop-jump screening test: difference in lower limb control by gender and effect of neuromuscular training in female athletes. *Am J Sports Med.* 2005;33(2):197-207.
+14. Bazarevsky V, Grishchenko I, Raveendran K, et al. BlazePose: On-device real-time body pose tracking. *arXiv:2006.10204*; 2020. Google MediaPipe Pose Landmarker: https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker
 
 > **Before you present:** open each link once and confirm the numbers you quote in the video (especially the NFHS participation figure, which NFHS updates every year).
