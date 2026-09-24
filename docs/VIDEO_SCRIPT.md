@@ -1,118 +1,100 @@
-# FuelCast: Pitch Video Script (≤ 3:00)
+# FuelCast: Demo Video Script (voice-over, ≤ 3:00)
 
 **Event:** 2026 GATSA App Development Pitch · **Theme:** Fitness & Nutrition
-**Deliverable:** one `.mp4`, **3:00 or shorter**, uploaded to myGATSA by **9:00 PM Friday, Sept 25**
-**Target length:** about 2:45 (~390 spoken words at a steady pace). Rehearse with a timer. If you run long, shorten the technical section first.
+**Format:** the whole video is a screen recording of FuelCast on an iPhone, with our presenter's voice-over. No slides, no presenter on camera.
+**Submit:** one `.mp4`, **3:00 or shorter**, uploaded to myGATSA by **9:00 PM Friday, Sept 25**
+**Length:** about 2:45 (~400 spoken words). Lines marked *(trim)* can be cut if you run long.
 
-Fill in the `[BRACKETS]` before recording.
+---
+
+## Top 3 features
+
+1. **AI Form Check.** Film a few reps; AI running on the phone finds 33 body points, measures your joint angles at the key moment, and tells you the one thing to fix. It also checks jump landings for knees caving in (an ACL-injury risk). The video never leaves the phone.
+2. **Fuel Forecast.** Enter your practices and games once, and FuelCast builds a timeline of exactly when to eat, then scores the best food combos from what's already in your kitchen.
+3. **Smart Coach.** A gym planner that tracks muscle recovery from lifts *and* practices, knows when your games are, recommends the right workout with reasons, and pre-fills your weights.
+
+*(In the video they appear in the order 2 → 3 → 1, so Form Check lands as the big finish.)*
 
 ---
 
 ## Required elements: where each one is covered
 
-| Rule requirement | Where in the video |
+| GATSA requirement | Where |
 |---|---|
-| Meets the theme (Fitness & Nutrition) | 0:30, said out loud; the app covers both fitness and nutrition |
-| Video up to 3 minutes | Timed to about 2:45 |
-| Problem statement and target audience | 0:10–0:30 |
-| App demonstration and walkthrough (**at least 4 key screens**) | 0:40–2:10: Today, Fuel window, Train / Smart Coach, Workout session, **Form Check**, Recipes, Shopping list, Coach, Progress (9 screens) |
-| Technical explanation of how the app works | 2:10–2:45 |
-
-| Rubric criterion | How this video earns a 9–10 |
-|---|---|
-| First impression and pitch quality | Cold-open hook, a live Form Check "wow" moment with the skeleton drawing on a teammate, fast cuts, captions |
-| App innovation and problem solved | One app that connects *schedule → training → form → fuel → cooking*, with on-device computer vision, an explainable Smart Coach and a context-aware AI Coach, built safe for teens |
-| Visual prototype and UI/UX walkthrough | A real working app on a real iPhone: 9 screens, quick actions, one continuous story |
-| Technical clarity | Names the stack, the engine modules, the pose-estimation pipeline, the AI integration, privacy, and the tests |
+| Meets the theme (Fitness & Nutrition) | Every feature is fitness or nutrition; the close ties them together |
+| Up to 3 minutes | About 2:45 |
+| Problem statement and target audience | 0:00–0:35 |
+| App demonstration and walkthrough (4+ key screens) | 0:35–2:10: Today, Fuel window, Train / Smart Coach, Workout session, Form Check setup, Form Check result (6+ screens) |
+| Technical explanation | 2:10–2:45, over the Progress and Settings screens |
 
 ---
 
 ## Script
 
-### 0:00–0:10 · HOOK
-**On screen:** Phone lock screen at 3:30 PM → a hand pulls a bag of chips from a backpack → a quick cut to a squat rack with "GAME TOMORROW" text on screen.
+Each block lists **what's on screen** (what to tap while recording) and the **voice-over**.
 
-> **NARRATOR:** Practice in fifteen minutes. You skipped lunch, the only thing in your bag is chips, and you're planning heavy squats tonight, with a game tomorrow. Sound familiar?
+### 0:00–0:35 · Open: problem and audience
 
-### 0:10–0:30 · PROBLEM + TARGET AUDIENCE
-**On screen:** Stat cards: `8M+ high-school athletes` → `No dietitian. No strength coach.` → `Apps built for adults and calorie counting`
+**On screen:** Tap the FuelCast icon → the Welcome screen → the **Today** tab. Let the timeline sit, then scroll slowly.
 
-> More than eight million students play high-school sports, but almost none have a dietitian, or a strength coach watching their form. So they guess. And the apps out there count calories or copy adult workouts.
+> **VO:** It's three-thirty. Practice starts at three forty-five, you skipped lunch, and you're planning heavy squats the night before a game. For high-school athletes, that's a normal day, because almost none of us have a dietitian or a strength coach.
+>
+> FuelCast is built for high-school athletes, ages fourteen to eighteen, who train almost every day. Knowing that food and training matter isn't the hard part. Timing, form, and planning around a real schedule are. And the apps out there? They just count calories.
 
-### 0:30–0:40 · SOLUTION
-**On screen:** The team on camera → the FuelCast icon → the welcome screen.
+### 0:35–1:05 · Feature 1 on screen: Fuel Forecast
 
-> We're [NAMES] from [SCHOOL] TSA. This is **FuelCast**, our Fitness and Nutrition app: your nutritionist, strength coach and form coach, in one iPhone app.
+**On screen:** On Today, show the **"Right now: Top-off snack"** card → scroll the timeline → tap **Plan it** → the window screen: "Why it matters", target pills, the three combos with scores → tap the top combo → **I ate this** → back on Today, the Fuel Score ring goes up.
 
-### 0:40–0:55 · TODAY *(screens 1–2)*
-**On screen:** Today: the quick-action buttons, "Right now: Top-off snack", the timeline → tap **Plan it** → combos → **I ate this**.
+> **VO:** First, the Fuel Forecast. Enter your practices and games once, and FuelCast builds your day: a meal three to four hours before, a top-off snack right before, and recovery after. Tap a window, and it searches every combination of food in your kitchen and scores each one against sports-nutrition targets. One tap logs it, and your Fuel Score goes up.
 
-> Add your schedule once, and Today becomes a fuel forecast: when to eat, what to grab from your own kitchen, and when to refuel. The buttons up top get you anywhere in one tap.
+### 1:05–1:35 · Feature 2 on screen: Smart Coach
 
-### 0:55–1:15 · TRAIN *(screens 3–4)*
-**On screen:** Train → Plan: the Smart Coach card ("Game tomorrow: keep it light") with ✓ reasons → **Start** → the session: suggested weights, check off a set, the rest timer.
+**On screen:** Tap the **Train** tab → the Smart Coach card ("Game tomorrow: keep it light") with the ✓ reasons under each workout → tap **Start** → the workout session: suggested weights, tap ✓ on a set, the rest timer counts down.
 
-> Our Smart Coach tracks how recovered each muscle is from your lifts *and* your practices. With a match tomorrow, it says keep it light, and tells you why. Workouts pre-fill your weights and time your rest.
+> **VO:** Next, Smart Coach. It tracks how recovered each muscle is from your lifts *and* your practices. With a game tomorrow, instead of heavy legs, it says keep it light, and tells you why. Start a workout, and it pre-fills your weights, adds about five percent when you've hit every rep, and times your rest.
 
-### 1:15–1:40 · FORM CHECK *(screen 5, the "wow" moment)*
-**On screen:** Train → Form → Squat → **Record a video** → a teammate does 2–3 squats filmed from the side → "Finding your joints…" → the result: score ring, **skeleton overlay**, "Focus on this", measurements. Quick cut: a jump-landing check flagging knees caving in.
+### 1:35–2:10 · Feature 3 on screen: AI Form Check
 
-> Here's our favorite part: Form Check. Film a few squats, and on-device AI finds thirty-three points on your body, measures your joint angles at the bottom of the rep, and tells you the one thing to fix. It even catches knees caving in on jump landings, a major ACL-injury risk. And your video never leaves your phone.
+**On screen:** Train → **Form** → **Squat** → the setup card → **Choose a video** (a teammate's squats, filmed from the side) → "Finding your joints…" progress bar → the result: score ring, **skeleton drawn on the athlete**, "Focus on this", then scroll through the measurements.
 
-### 1:40–1:55 · RECIPES + SHOPPING *(screens 6–7)*
-**On screen:** Fuel → Recipes: type "eggs, tortillas, cheese" → Ready to make → open a recipe → **Add missing to shopping list** → the List tab.
+> **VO:** And our favorite: AI Form Check. Pick a clip of your squats, and an AI model running right on the phone finds thirty-three points on your body in every frame. FuelCast finds the bottom of your rep, measures your knee and hip angles, and tells you the one thing to fix. It even checks jump landings for knees caving in, a major ACL-injury risk. *(trim)* And your video never leaves your phone.
 
-> Type what's in your fridge for recipes you can make right now, and one tap turns what's missing into a shopping list for your week.
+### 2:10–2:45 · How it works (technical explanation)
 
-### 1:55–2:10 · COACH + PROGRESS *(screens 8–9)*
-**On screen:** Coach: a question → a reply with a workout card → **Save**. Then Progress: fuel vs. energy, muscle readiness, form scores. Keep the "Sample athlete · demo data" badge visible.
+**On screen:** Tap **Progress** and scroll slowly (Fuel Score chart, muscle readiness, form scores) → tap the ⚙️ on Today → scroll to **The science** list of sources.
 
-> Ask our AI Coach, powered by Grok, anything. It knows your schedule and your kitchen. And Progress shows the payoff: our sample athlete rates her energy about [READ THE NUMBER ON SCREEN] points higher on days she fuels.
+> **VO:** Here's how it works. FuelCast is a native iPhone app built with React Native and Expo, written in TypeScript. Under the hood is a tested engine. The forecast engine times every fuel window from your schedule. Fuel Fit scores food against American College of Sports Medicine targets. Smart Coach models muscle fatigue that fades every day and follows youth strength-training guidelines. Form Check runs Google's MediaPipe pose model on the phone, and our geometry engine grades the angles. Your data stays on your phone, and ninety-five automated tests check that it all works.
 
-### 2:10–2:45 · TECHNICAL EXPLANATION
-**On screen:** The README "How it works" diagram, then the Form Check pipeline diagram from ARCHITECTURE.md (section 5.11). Flash `npm test` with 89 passing tests.
+### 2:45–2:55 · Close
 
-> Under the hood, FuelCast is a native iPhone app in React Native and TypeScript, built on a tested engine. Fuel Fit scores food combos against American College of Sports Medicine targets. The Smart Coach models muscle fatigue and follows youth strength guidelines. Form Check runs Google's MediaPipe pose model right on the phone, then our geometry engine grades the joint angles. The AI Coach uses Grok with structured outputs. And eighty-nine automated tests check it all.
+**On screen:** Back to **Today**. Hold on the Fuel Score ring for the last line.
 
-### 2:45–2:55 · CLOSE
-**On screen:** The Today screen → the logo card: **FuelCast: Train smart. Fuel smart.** Team names and chapter.
-
-> No calorie counting. No guessing. Just a plan, and a coach, that fit your season. This is FuelCast.
+> **VO:** No calorie counting. No guessing. Just the right fuel, the right workout, and the right form, planned around your season. This is FuelCast, from [SCHOOL NAME] TSA.
 
 ---
 
-## Shot list and recording guide
+## Recording guide
 
-### Before you record
-1. Run the app on an iPhone (README: `npx expo start`, then scan the QR code with Expo Go).
-2. Tap **Explore with a sample athlete** (or Settings → Load sample athlete).
-3. **Timing trick:** the sample athlete practices Mon/Tue/Thu at 3:45 PM and has matches Wed/Fri at 6 PM. Record between **2:45 and 3:15 PM on a Tuesday** and Today shows *"Right now: Top-off snack"*, and Smart Coach says *"Game tomorrow: keep it light"*, which matches the hook.
-4. **Form Check:** run it once on Wi-Fi beforehand so the pose model downloads. Film from the side, with the whole body in frame and good light. For the jump-landing clip, film from the front. Record one good set and one quarter-squat set so you can show a fix.
-5. **AI Coach (Grok):** your key loads automatically in Expo Go from `.env.local`, but the xAI account needs **credits** first (console.x.ai → Billing). Test one question before filming. No credits? Use the on-device replies. Tap the quick prompts "Build me a 30-min workout" and "What can I cook with my kitchen?", and change the narration to "…or ask the Coach, which even works offline."
-6. Do Not Disturb on, full battery, max brightness.
-7. Record with **Control Center → Screen Recording**.
+### Set up the phone
+1. Run the app on the iPhone (`cd ~/fuelcast && npx expo start`, then scan the QR code with Expo Go).
+2. Load the sample data: **Settings → Load sample athlete**. (It shows a "Sample athlete" badge. The voice-over says "you" and "your" throughout, so it never claims the data is ours.)
+3. **Timing trick:** record the Today and Train parts between **2:45 and 3:15 PM on a Tuesday**. The sample athlete has practice at 3:45 and a match Wednesday, so Today shows *"Right now: Top-off snack"* and Smart Coach shows *"Game tomorrow: keep it light"*, which matches the voice-over.
+4. **Form Check clip:** beforehand, film a teammate doing 3 slow bodyweight or goblet squats **from the side**: phone at hip height, whole body in frame, good light, plain background, under 10 seconds. Save it to Photos. Run Form Check once on Wi-Fi before recording so the pose model is already downloaded.
+5. Do Not Disturb on, brightness up, battery charged.
 
-### Shots
-| # | Shot | Source |
-|---|---|---|
-| 1 | Lock screen, chips, squat clip | Phone camera (B-roll) |
-| 2 | Stat cards | Canva / CapCut / Keynote |
-| 3 | Team intro + icon | Camera / `assets/icon.png` |
-| 4 | Today → Plan it → combos → I ate this | Screen recording |
-| 5 | Train: Smart Coach → Start → log a set → rest timer | Screen recording |
-| 5b | Form Check: record a teammate's squats (side view) → skeleton + score; a jump landing from the front | Screen recording + a second phone filming the athlete (optional B-roll) |
-| 6 | Recipes: type foods → recipe → add missing → List → move to kitchen | Screen recording |
-| 7 | Coach question → reply with workout + recipe → Save | Screen recording |
-| 8 | Progress: fuel vs. energy, muscle readiness | Screen recording |
-| 9 | Architecture diagram + `npm test` | Screenshot / terminal |
-| 10 | End card | Editor |
+### Record
+- Record each block as its own clip with **Control Center → Screen Recording**. Tap slowly and pause about 1 second on each result so viewers can read it.
+- Record the **voice-over separately** in a quiet room (a closet works), reading from this script. Clear audio is the biggest "First Impression" win.
 
-### Editing tips
-- Record the voice-over separately in a quiet room. Clear audio is the biggest "First Impression" win.
-- Use fast cuts (1–3 seconds per action), with the phone recording in a device frame and zooms on taps.
-- Add captions for the whole narration (CapCut auto-captions).
-- Keep music at 10–15% under the voice.
-- Export 1080p, H.264, `.mp4`, and **check the final length is under 3:00**.
+### Edit (CapCut or iMovie)
+- Line up each voice-over block with its screen clip; trim dead time between taps.
+- Zoom in (about 120%) on the key moments: the combo scores, the Smart Coach reasons, and the skeleton on the Form Check result.
+- Add captions for all narration (CapCut auto-captions) and quiet background music (10–15% volume).
+- Put a 2-second title card at the start ("FuelCast · [School] TSA") only if it fits under 3:00.
+- Export **1080p, H.264, `.mp4`**, and check that the final length is **under 3:00**.
 
-### A note on originality
-The rules require entries to be the chapter's own original work from this school year. The feature direction (gym planner, AI workout recommendations, shopping list, recipes from your food) came from your team; make sure you can explain every part in your own words. Ask your advisor about GATSA's policy on AI-assisted development, and disclose it if required.
+### Before uploading
+- Watch the whole video once with sound.
+- Fill in **[SCHOOL NAME]**.
+- Confirm `npm test` still says **95 passed** (the voice-over quotes that number).
+- Upload to **myGATSA** before **9:00 PM Friday, Sept 25**.
