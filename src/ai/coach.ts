@@ -11,80 +11,16 @@
 //   documents that React Native is not a supported runtime, so the app speaks the
 //   REST API directly (same request shape as the SDK).
 
-import { EXERCISE_BY_ID, EXERCISES, EQUIPMENT_LABEL } from '../data/exercises';
+import { EXERCISE_BY_ID } from '../data/exercises';
 import { FOOD_BY_ID } from '../data/foods';
 import { estimateMinutes, type Workout, type WorkoutItem } from '../data/workouts';
 import type { ChatMessage, ChatRecipe } from '../state/store';
 import type { AiProvider } from './key';
+import { FORM_SYSTEM_PROMPT, RESPONSE_SCHEMA, SYSTEM_PROMPT } from './prompts';
 
 export const COACH_MODEL = 'claude-opus-5';
 
-const EXERCISE_LIST = EXERCISES.map((e) => `${e.id}: ${e.name} (${EQUIPMENT_LABEL[e.equipment]})`).join('\n');
-
-export const SYSTEM_PROMPT = `You are FuelCast Coach, a friendly strength, conditioning and sports-nutrition coach inside FuelCast, an iPhone app for high-school athletes (ages 14–18).
-
-How to coach:
-- Training follows youth resistance-training guidance (NSCA 2009, AAP 2020): technique first, 1–3 sets (up to 4 for experienced lifters) of 6–15 reps, 2–3 non-consecutive strength days a week, a real warm-up, and a spotter for barbell pressing.
-- Respect the schedule in the athlete context: no hard leg work or conditioning the day before or the day of a game, and favor muscles the context marks as fresh.
-- Fueling follows the ACSM / Academy of Nutrition and Dietetics / Dietitians of Canada position: a carb-focused meal 3–4 hours before training, a small low-fat, low-fiber carb snack 30–60 minutes before, and carbs plus 15–25 g protein within an hour after. Hydrate before, during and after.
-- Never give calorie targets, weight-loss, cutting or bulking plans, or comment on body size or shape. Never recommend supplements, pre-workout or energy drinks; for questions about them, suggest asking a doctor or registered dietitian.
-- If the athlete mentions pain, an injury, dizziness, chest pain, fainting or disordered eating, don't program around it. Kindly tell them to stop and talk to their athletic trainer, a parent or a doctor.
-- Keep replies short and practical: under 120 words, plain language, no headings.
-
-Output: reply with JSON matching the schema.
-- "reply" is the message the athlete reads.
-- Fill "workout" only when they ask for a workout or session plan. Use only exerciseId values from the list below, and only exercises their equipment allows ("Bodyweight" is always available). Otherwise set it to null.
-- Fill "recipe" only when they ask for a recipe or meal idea. Build it from their kitchen foods where possible. Otherwise set it to null.
-- "shopping" lists anything they'd need to buy for your suggestion (an empty array if nothing).
-
-Exercise library (exerciseId: name (equipment)):
-${EXERCISE_LIST}`;
-
-const nullable = (schema: object) => ({ anyOf: [{ type: 'null' }, schema] });
-
-export const RESPONSE_SCHEMA = {
-  type: 'object',
-  properties: {
-    reply: { type: 'string' },
-    workout: nullable({
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        items: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              exerciseId: { type: 'string', enum: EXERCISES.map((e) => e.id) },
-              sets: { type: 'integer' },
-              reps: { type: 'integer', description: 'Reps, or seconds for timed exercises' },
-              restSec: { type: 'integer' },
-              note: { type: 'string' },
-            },
-            required: ['exerciseId', 'sets', 'reps', 'restSec', 'note'],
-            additionalProperties: false,
-          },
-        },
-      },
-      required: ['name', 'items'],
-      additionalProperties: false,
-    }),
-    recipe: nullable({
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        minutes: { type: 'integer' },
-        ingredients: { type: 'array', items: { type: 'string' } },
-        steps: { type: 'array', items: { type: 'string' } },
-      },
-      required: ['name', 'minutes', 'ingredients', 'steps'],
-      additionalProperties: false,
-    }),
-    shopping: { type: 'array', items: { type: 'string' } },
-  },
-  required: ['reply', 'workout', 'recipe', 'shopping'],
-  additionalProperties: false,
-} as const;
+export { FORM_SYSTEM_PROMPT, RESPONSE_SCHEMA, SYSTEM_PROMPT };
 
 export interface CoachReply {
   reply: string;
@@ -188,7 +124,9 @@ export function historyToMessages(chat: ChatMessage[], provider: AiProvider = 'c
 }
 
 export interface AskOptions {
-  apiKey: string;
+  apiKey?: string;
+  /** Grok only: send through the shared FuelCast coach server instead of a key. */
+  serverUrl?: string;
   history: ChatMessage[];
   message: string;
   context: string;
@@ -199,7 +137,8 @@ export interface AskOptions {
 
 export const API_URL = 'https://api.anthropic.com/v1/messages';
 export const GROK_URL = 'https://api.x.ai/v1/chat/completions';
-export const GROK_MODEL = 'grok-4.7';
+export { GROK_MODEL } from './prompts';
+import { GROK_MODEL } from './prompts';
 
 interface ApiResponse {
   content: { type: string; text?: string }[];
@@ -281,9 +220,15 @@ interface GrokResponse {
   choices?: { message?: { content?: string | null; refusal?: string | null }; finish_reason?: string }[];
 }
 
-/** xAI Grok, via its OpenAI-compatible chat completions endpoint. Returns the reply text. */
-async function callGrok(apiKey: string, payload: object, fetchImpl: typeof fetch): Promise<string> {
-  const data = await postJson<GrokResponse>(GROK_URL, { authorization: `Bearer ${apiKey}` }, { model: GROK_MODEL, ...payload }, fetchImpl);
+/**
+ * xAI Grok via its OpenAI-compatible chat completions endpoint, either directly with
+ * a key or through the FuelCast coach server (which adds the key). Returns the reply text.
+ */
+async function callGrok(auth: { apiKey?: string; serverUrl?: string }, payload: object, fetchImpl: typeof fetch): Promise<string> {
+  let data: GrokResponse;
+  if (auth.serverUrl) data = await postJson<GrokResponse>(auth.serverUrl, {}, payload, fetchImpl);
+  else if (auth.apiKey) data = await postJson<GrokResponse>(GROK_URL, { authorization: `Bearer ${auth.apiKey}` }, { model: GROK_MODEL, ...payload }, fetchImpl);
+  else throw new CoachError('The AI Coach isn’t connected. Add a key in Settings → AI Coach.');
   const choice = data.choices?.[0];
   if (choice?.message?.refusal) throw new CoachError(REFUSED);
   if (choice?.finish_reason === 'length') throw new CoachError(CUT_OFF);
@@ -300,10 +245,10 @@ const textOf = (data: ApiResponse) =>
 
 const userTurn = (context: string, message: string) => `<athlete_context>\n${context}\n</athlete_context>\n\n${message}`;
 
-export async function askCoach({ apiKey, history, message, context, provider = 'claude', fetch: fetchImpl = fetch }: AskOptions): Promise<CoachReply> {
+export async function askCoach({ apiKey, serverUrl, history, message, context, provider = 'claude', fetch: fetchImpl = fetch }: AskOptions): Promise<CoachReply> {
   if (provider === 'grok') {
     const text = await callGrok(
-      apiKey,
+      { apiKey, serverUrl },
       {
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
@@ -316,6 +261,7 @@ export async function askCoach({ apiKey, history, message, context, provider = '
     );
     return { ...parseCoachJson(text), content: text };
   }
+  if (!apiKey) throw new CoachError('Add a Claude key in Settings → AI Coach.');
   const data = await callClaude(
     apiKey,
     {
@@ -328,14 +274,10 @@ export async function askCoach({ apiKey, history, message, context, provider = '
   return { ...parseCoachJson(textOf(data)), content: data.content };
 }
 
-export const FORM_SYSTEM_PROMPT = `You are FuelCast Coach reviewing a high-school athlete's exercise form from one still frame. The app has already measured joint angles on the phone; the skeleton overlay on the image shows what it detected.
-- Give 2–4 short, specific, encouraging coaching cues in plain language (under 90 words total), most important first.
-- Base them on what the image and the measurements show. If the image is unclear, say so instead of guessing.
-- Never diagnose injuries or comment on body size or shape. If anything suggests pain or injury risk, advise stopping and checking with an athletic trainer.`;
-
 /** Ask the AI Coach to explain a form-check result, using the annotated key frame (JPEG data URL). */
 export async function askFormFeedback(opts: {
-  apiKey: string;
+  apiKey?: string;
+  serverUrl?: string;
   movementName: string;
   summary: string;
   imageDataUrl: string;
@@ -347,7 +289,7 @@ export async function askFormFeedback(opts: {
   const prompt = `Movement: ${opts.movementName}\nOn-device measurements:\n${opts.summary}\n\nWhat should I focus on?`;
   if (opts.provider === 'grok') {
     const text = await callGrok(
-      opts.apiKey,
+      { apiKey: opts.apiKey, serverUrl: opts.serverUrl },
       {
         messages: [
           { role: 'system', content: FORM_SYSTEM_PROMPT },
@@ -364,6 +306,7 @@ export async function askFormFeedback(opts: {
     );
     return text.trim();
   }
+  if (!opts.apiKey) throw new CoachError('Add a Claude key in Settings → AI Coach.');
   const data = await callClaude(
     opts.apiKey,
     {

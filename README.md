@@ -80,6 +80,21 @@ FuelCast is built with **Expo (React Native)**, so it runs on a real iPhone thro
 
 **Optional: turn on the AI Coach.** In **Settings → AI Coach**, choose **Grok** (key from [console.x.ai](https://console.x.ai)) or **Claude** (key from [console.anthropic.com](https://console.anthropic.com/settings/keys)) and paste a key. For development builds you can instead put `EXPO_PUBLIC_XAI_API_KEY=...` in a git-ignored `.env.local` file; the app only reads it when `__DEV__` is true, so it never ships in production builds or the website. Without a key, the Coach tab still answers the common requests on-device.
 
+## One AI key for everyone (coach server)
+
+The AI Coach can run through a small server function (`netlify/functions/coach.ts`) that holds **one shared xAI (Grok) key**, so every user gets the coach without a key of their own, and the key is never inside the app or website.
+
+1. **Add credits** to the xAI account at [console.x.ai](https://console.x.ai), and set a **monthly spending limit** there.
+2. Log in to Netlify once: `npx netlify-cli login`.
+3. In Netlify → your site → **Site configuration → Environment variables**, add `XAI_API_KEY` = your xAI key.
+4. In `.env.local` (copy `.env.example`), set `EXPO_PUBLIC_COACH_API_URL=https://YOUR-SITE.netlify.app/api/coach`.
+5. Build and deploy the website and the function together:
+   ```bash
+   npx expo export --platform web && npx netlify-cli deploy --prod --dir dist
+   ```
+
+The server only accepts FuelCast's own coach prompts, fixes the model, and rate-limits each visitor (20 requests per 10 minutes), so it can't be used as a free general-purpose Grok proxy.
+
 ## How it works
 
 ```mermaid

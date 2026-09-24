@@ -179,7 +179,7 @@ export default function Coach() {
 
     setBusy(true);
     try {
-      const res = await askCoach({ apiKey: ai.key, provider: ai.provider, history: state.chat, message: text, context: buildContext(state, new Date()) });
+      const res = await askCoach({ apiKey: ai.key, serverUrl: ai.serverUrl, provider: ai.provider, history: state.chat, message: text, context: buildContext(state, new Date()) });
       addChat([
         {
           id: newId(),

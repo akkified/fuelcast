@@ -1,0 +1,9 @@
+# Netlify: build the web app and deploy the coach server function.
+# Set XAI_API_KEY in Site settings → Environment variables (never commit it).
+[build]
+  command = "npx expo export --platform web"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

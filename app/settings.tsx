@@ -182,8 +182,9 @@ export default function Settings() {
         {savedKey ? (
           <>
             <Text style={[type.body, { color: colors.great }]}>
-              ✓ {PROVIDER_NAME[provider]} connected (key {maskKey(savedKey.key)}
-              {savedKey.source === 'dev' ? ', from .env.local in this development build' : ''})
+              {savedKey.source === 'server'
+                ? `✓ ${PROVIDER_NAME[provider]} connected through the FuelCast coach server. No key needed.`
+                : `✓ ${PROVIDER_NAME[provider]} connected (key ${maskKey(savedKey.key ?? '')}${savedKey.source === 'dev' ? ', from .env.local in this development build' : ''})`}
             </Text>
             {savedKey.source === 'saved' && (
               <Button

@@ -124,6 +124,7 @@ export default function FormCheckScreen() {
     try {
       const text = await askFormFeedback({
         apiKey: aiConfig.key,
+        serverUrl: aiConfig.serverUrl,
         provider: aiConfig.provider,
         movementName: movement.name,
         summary: report.checks.map((c) => `${c.label}: ${c.status}${c.value ? ` (${c.value})` : ''}. ${c.detail}`).join('\n'),
