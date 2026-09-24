@@ -67,12 +67,12 @@ Fill in the `[BRACKETS]` before recording.
 ### 1:55–2:10 · COACH + PROGRESS *(screens 8–9)*
 **On screen:** Coach: a question → a reply with a workout card → **Save**. Then Progress: fuel vs. energy, muscle readiness, form scores. Keep the "Sample athlete · demo data" badge visible.
 
-> Ask our AI Coach, powered by Claude, anything. It knows your schedule and your kitchen. And Progress shows the payoff: our sample athlete rates her energy about [READ THE NUMBER ON SCREEN] points higher on days she fuels.
+> Ask our AI Coach, powered by Grok, anything. It knows your schedule and your kitchen. And Progress shows the payoff: our sample athlete rates her energy about [READ THE NUMBER ON SCREEN] points higher on days she fuels.
 
 ### 2:10–2:45 · TECHNICAL EXPLANATION
-**On screen:** The README "How it works" diagram, then the Form Check pipeline diagram from ARCHITECTURE.md (section 5.11). Flash `npm test` with 85 passing tests.
+**On screen:** The README "How it works" diagram, then the Form Check pipeline diagram from ARCHITECTURE.md (section 5.11). Flash `npm test` with 89 passing tests.
 
-> Under the hood, FuelCast is a native iPhone app in React Native and TypeScript, built on a tested engine. Fuel Fit scores food combos against American College of Sports Medicine targets. The Smart Coach models muscle fatigue and follows youth strength guidelines. Form Check runs Google's MediaPipe pose model right on the phone, then our geometry engine grades the joint angles. The AI Coach uses Claude with structured outputs. And eighty-five automated tests check it all.
+> Under the hood, FuelCast is a native iPhone app in React Native and TypeScript, built on a tested engine. Fuel Fit scores food combos against American College of Sports Medicine targets. The Smart Coach models muscle fatigue and follows youth strength guidelines. Form Check runs Google's MediaPipe pose model right on the phone, then our geometry engine grades the joint angles. The AI Coach uses Grok with structured outputs. And eighty-nine automated tests check it all.
 
 ### 2:45–2:55 · CLOSE
 **On screen:** The Today screen → the logo card: **FuelCast: Train smart. Fuel smart.** Team names and chapter.
@@ -88,7 +88,7 @@ Fill in the `[BRACKETS]` before recording.
 2. Tap **Explore with a sample athlete** (or Settings → Load sample athlete).
 3. **Timing trick:** the sample athlete practices Mon/Tue/Thu at 3:45 PM and has matches Wed/Fri at 6 PM. Record between **2:45 and 3:15 PM on a Tuesday** and Today shows *"Right now: Top-off snack"*, and Smart Coach says *"Game tomorrow: keep it light"*, which matches the hook.
 4. **Form Check:** run it once on Wi-Fi beforehand so the pose model downloads. Film from the side, with the whole body in frame and good light. For the jump-landing clip, film from the front. Record one good set and one quarter-squat set so you can show a fix.
-5. **AI Coach:** to show a live Claude reply, connect a key in Settings → AI Coach (ask a parent or guardian; it's a paid account). No key? Use the on-device replies. Tap the quick prompts "Build me a 30-min workout" and "What can I cook with my kitchen?", and change the narration to "…or ask the Coach, which even works offline."
+5. **AI Coach (Grok):** your key loads automatically in Expo Go from `.env.local`, but the xAI account needs **credits** first (console.x.ai → Billing). Test one question before filming. No credits? Use the on-device replies. Tap the quick prompts "Build me a 30-min workout" and "What can I cook with my kitchen?", and change the narration to "…or ask the Coach, which even works offline."
 6. Do Not Disturb on, full battery, max brightness.
 7. Record with **Control Center → Screen Recording**.
 

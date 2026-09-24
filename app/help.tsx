@@ -54,7 +54,7 @@ const SECTIONS: { icon: Icon; color: string; title: string; body: string[] }[] =
     title: 'Coach',
     body: [
       'Without setup, Smart Coach answers the common requests on your phone.',
-      'Connect Claude in Settings for open-ended coaching. Each message sends a short summary (sport, schedule, readiness, recent workouts, kitchen), never your name or weight.',
+      'Connect an AI (Grok or Claude) in Settings for open-ended coaching. Each message sends a short summary (sport, schedule, readiness, recent workouts, kitchen), never your name or weight.',
     ],
   },
   {

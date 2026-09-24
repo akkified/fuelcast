@@ -8,3 +8,8 @@ expo-env.d.ts
 /ios
 /android
 coverage/
+
+# Local secrets (API keys) — never commit
+.env
+.env.local
+.env*.local

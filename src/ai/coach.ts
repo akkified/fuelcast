@@ -15,6 +15,7 @@ import { EXERCISE_BY_ID, EXERCISES, EQUIPMENT_LABEL } from '../data/exercises';
 import { FOOD_BY_ID } from '../data/foods';
 import { estimateMinutes, type Workout, type WorkoutItem } from '../data/workouts';
 import type { ChatMessage, ChatRecipe } from '../state/store';
+import type { AiProvider } from './key';
 
 export const COACH_MODEL = 'claude-opus-5';
 
@@ -167,15 +168,19 @@ export interface ApiMessage {
   content: string | unknown[];
 }
 
-/** Rebuild API history from saved chat: only completed user → assistant exchanges with Claude. */
-export function historyToMessages(chat: ChatMessage[]): ApiMessage[] {
+/**
+ * Rebuild API history from saved chat: only completed user → assistant exchanges
+ * with the same provider (Claude replays content blocks; Grok replays the JSON text).
+ */
+export function historyToMessages(chat: ChatMessage[], provider: AiProvider = 'claude'): ApiMessage[] {
   const out: ApiMessage[] = [];
   for (let i = 0; i < chat.length - 1; i++) {
     const u = chat[i];
     const a = chat[i + 1];
-    if (u.role === 'user' && !u.offline && a.role === 'assistant' && !a.offline && !a.error && a.content) {
+    const sameProvider = (a.provider ?? 'claude') === provider;
+    if (u.role === 'user' && !u.offline && a.role === 'assistant' && !a.offline && !a.error && a.content && sameProvider) {
       out.push({ role: 'user', content: u.text });
-      out.push({ role: 'assistant', content: a.content as unknown[] });
+      out.push({ role: 'assistant', content: a.content as string | unknown[] });
       i++;
     }
   }
@@ -187,11 +192,14 @@ export interface AskOptions {
   history: ChatMessage[];
   message: string;
   context: string;
+  provider?: AiProvider;
   /** For tests. */
   fetch?: typeof fetch;
 }
 
 export const API_URL = 'https://api.anthropic.com/v1/messages';
+export const GROK_URL = 'https://api.x.ai/v1/chat/completions';
+export const GROK_MODEL = 'grok-4.7';
 
 interface ApiResponse {
   content: { type: string; text?: string }[];
@@ -199,13 +207,16 @@ interface ApiResponse {
 }
 
 interface ApiErrorBody {
-  error?: { type?: string; message?: string };
+  error?: { type?: string; message?: string } | string;
+  code?: string;
 }
 
 function errorFor(status: number, body: ApiErrorBody | null): CoachError {
-  const type = body?.error?.type;
-  if (status === 401 || type === 'authentication_error') return new CoachError('That API key didn’t work. Check it in Settings → AI Coach.');
-  if (status === 402 || type === 'billing_error') return new CoachError('This API key’s account is out of credits.');
+  const type = typeof body?.error === 'object' ? body.error.type : undefined;
+  const text = `${typeof body?.error === 'string' ? body.error : (body?.error?.message ?? '')} ${body?.code ?? ''}`.toLowerCase();
+  if (/credit|license|billing|balance/.test(text) || status === 402 || type === 'billing_error')
+    return new CoachError('This AI account has no credits yet. Add credits to it (for Grok: console.x.ai), then try again.');
+  if (status === 401 || type === 'authentication_error' || /api key/.test(text)) return new CoachError('That API key didn’t work. Check it in Settings → AI Coach.');
   if (status === 403 || type === 'permission_error') return new CoachError('This API key doesn’t have access to the coach model.');
   if (status === 429 || type === 'rate_limit_error') return new CoachError('The coach is busy right now. Try again in a minute.');
   if (status === 529 || type === 'overloaded_error') return new CoachError('The coach is overloaded right now. Try again in a minute.');
@@ -214,24 +225,15 @@ function errorFor(status: number, body: ApiErrorBody | null): CoachError {
 
 const RETRYABLE = new Set([408, 409, 429, 500, 502, 503, 504, 529]);
 
-/** POST to the Messages API with retries and friendly errors. Returns the parsed response. */
-async function callClaude(apiKey: string, payload: object, fetchImpl: typeof fetch): Promise<ApiResponse> {
-  const body = JSON.stringify({ model: COACH_MODEL, max_tokens: 16000, fallbacks: 'default', ...payload });
-  const headers = {
-    'content-type': 'application/json',
-    'x-api-key': apiKey,
-    'anthropic-version': '2023-06-01',
-    'anthropic-beta': 'server-side-fallback-2026-07-01',
-    // Needed for the web build; the athlete supplies their own key, so direct access is intended.
-    'anthropic-dangerous-direct-browser-access': 'true',
-  };
-
+/** POST JSON with a timeout, one retry on transient failures, and friendly errors. */
+async function postJson<T>(url: string, headers: Record<string, string>, payload: object, fetchImpl: typeof fetch): Promise<T> {
+  const body = JSON.stringify(payload);
   let res: Response | undefined;
   for (let attempt = 0; attempt < 2; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 90_000);
     try {
-      res = await fetchImpl(API_URL, { method: 'POST', headers, body, signal: controller.signal });
+      res = await fetchImpl(url, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body, signal: controller.signal });
     } catch {
       res = undefined;
     } finally {
@@ -246,18 +248,48 @@ async function callClaude(apiKey: string, payload: object, fetchImpl: typeof fet
     const err = (await res.json().catch(() => null)) as ApiErrorBody | null;
     throw errorFor(res.status, err);
   }
-
-  let data: ApiResponse;
   try {
-    data = (await res.json()) as ApiResponse;
+    return (await res.json()) as T;
   } catch {
     throw new CoachError('The coach sent a reply I couldn’t read. Try again.');
   }
-  if (data.stop_reason === 'refusal') {
-    throw new CoachError('The coach can’t help with that one. For anything medical, talk to your athletic trainer or doctor.');
-  }
-  if (data.stop_reason === 'max_tokens') throw new CoachError('That answer ran long and got cut off. Try a more specific question.');
+}
+
+const REFUSED = 'The coach can’t help with that one. For anything medical, talk to your athletic trainer or doctor.';
+const CUT_OFF = 'That answer ran long and got cut off. Try a more specific question.';
+
+/** Claude Messages API. */
+async function callClaude(apiKey: string, payload: object, fetchImpl: typeof fetch): Promise<ApiResponse> {
+  const data = await postJson<ApiResponse>(
+    API_URL,
+    {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-beta': 'server-side-fallback-2026-07-01',
+      // Needed for the web build; the athlete supplies their own key, so direct access is intended.
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    { model: COACH_MODEL, max_tokens: 16000, fallbacks: 'default', ...payload },
+    fetchImpl,
+  );
+  if (data.stop_reason === 'refusal') throw new CoachError(REFUSED);
+  if (data.stop_reason === 'max_tokens') throw new CoachError(CUT_OFF);
   return data;
+}
+
+interface GrokResponse {
+  choices?: { message?: { content?: string | null; refusal?: string | null }; finish_reason?: string }[];
+}
+
+/** xAI Grok, via its OpenAI-compatible chat completions endpoint. Returns the reply text. */
+async function callGrok(apiKey: string, payload: object, fetchImpl: typeof fetch): Promise<string> {
+  const data = await postJson<GrokResponse>(GROK_URL, { authorization: `Bearer ${apiKey}` }, { model: GROK_MODEL, ...payload }, fetchImpl);
+  const choice = data.choices?.[0];
+  if (choice?.message?.refusal) throw new CoachError(REFUSED);
+  if (choice?.finish_reason === 'length') throw new CoachError(CUT_OFF);
+  const text = choice?.message?.content ?? '';
+  if (!text.trim()) throw new CoachError('The coach didn’t send a reply. Try again.');
+  return text;
 }
 
 const textOf = (data: ApiResponse) =>
@@ -266,15 +298,29 @@ const textOf = (data: ApiResponse) =>
     .map((b) => b.text)
     .join('');
 
-export async function askCoach({ apiKey, history, message, context, fetch: fetchImpl = fetch }: AskOptions): Promise<CoachReply> {
+const userTurn = (context: string, message: string) => `<athlete_context>\n${context}\n</athlete_context>\n\n${message}`;
+
+export async function askCoach({ apiKey, history, message, context, provider = 'claude', fetch: fetchImpl = fetch }: AskOptions): Promise<CoachReply> {
+  if (provider === 'grok') {
+    const text = await callGrok(
+      apiKey,
+      {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...historyToMessages(history, 'grok'),
+          { role: 'user', content: userTurn(context, message) },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'coach_reply', strict: true, schema: RESPONSE_SCHEMA } },
+      },
+      fetchImpl,
+    );
+    return { ...parseCoachJson(text), content: text };
+  }
   const data = await callClaude(
     apiKey,
     {
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-      messages: [
-        ...historyToMessages(history),
-        { role: 'user', content: `<athlete_context>\n${context}\n</athlete_context>\n\n${message}` },
-      ],
+      messages: [...historyToMessages(history, 'claude'), { role: 'user', content: userTurn(context, message) }],
       output_config: { effort: 'low', format: { type: 'json_schema', schema: RESPONSE_SCHEMA } },
     },
     fetchImpl,
@@ -287,16 +333,37 @@ export const FORM_SYSTEM_PROMPT = `You are FuelCast Coach reviewing a high-schoo
 - Base them on what the image and the measurements show. If the image is unclear, say so instead of guessing.
 - Never diagnose injuries or comment on body size or shape. If anything suggests pain or injury risk, advise stopping and checking with an athletic trainer.`;
 
-/** Ask Claude to explain a form-check result, using the annotated key frame (JPEG data URL). */
+/** Ask the AI Coach to explain a form-check result, using the annotated key frame (JPEG data URL). */
 export async function askFormFeedback(opts: {
   apiKey: string;
   movementName: string;
   summary: string;
   imageDataUrl: string;
+  provider?: AiProvider;
   fetch?: typeof fetch;
 }): Promise<string> {
   const m = opts.imageDataUrl.match(/^data:(image\/(?:jpeg|png));base64,(.+)$/);
   if (!m) throw new CoachError('That frame couldn’t be sent to the coach.');
+  const prompt = `Movement: ${opts.movementName}\nOn-device measurements:\n${opts.summary}\n\nWhat should I focus on?`;
+  if (opts.provider === 'grok') {
+    const text = await callGrok(
+      opts.apiKey,
+      {
+        messages: [
+          { role: 'system', content: FORM_SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: [
+              { type: 'image_url', image_url: { url: opts.imageDataUrl, detail: 'high' } },
+              { type: 'text', text: prompt },
+            ],
+          },
+        ],
+      },
+      opts.fetch ?? fetch,
+    );
+    return text.trim();
+  }
   const data = await callClaude(
     opts.apiKey,
     {
@@ -307,7 +374,7 @@ export async function askFormFeedback(opts: {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } },
-            { type: 'text', text: `Movement: ${opts.movementName}\nOn-device measurements:\n${opts.summary}\n\nWhat should I focus on?` },
+            { type: 'text', text: prompt },
           ],
         },
       ],

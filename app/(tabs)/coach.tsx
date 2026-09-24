@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { askCoach, CoachError } from '@/ai/coach';
 import { buildContext } from '@/ai/context';
-import { getApiKey } from '@/ai/key';
+import { getAiConfig, PROVIDER_NAME, type AiConfig } from '@/ai/key';
 import { offlineReply, QUICK_PROMPTS } from '@/ai/offline';
 import { EXERCISE_BY_ID } from '@/data/exercises';
 import type { Workout } from '@/data/workouts';
@@ -117,7 +117,7 @@ function Bubble({ m }: { m: ChatMessage }) {
     >
       <Row style={{ gap: 6, marginBottom: 4 }}>
         <Ionicons name={m.offline ? 'hardware-chip-outline' : 'sparkles'} size={12} color={m.offline ? colors.textDim : colors.recovery} />
-        <Text style={[type.small, { fontSize: 11 }]}>{m.offline ? 'Smart Coach · on-device' : m.error ? 'Coach' : 'AI Coach · Claude'}</Text>
+        <Text style={[type.small, { fontSize: 11 }]}>{m.offline ? 'Smart Coach · on-device' : m.error ? 'Coach' : `AI Coach · ${PROVIDER_NAME[m.provider ?? 'claude']}`}</Text>
       </Row>
       <Text style={[type.body, m.error && { color: colors.danger }]}>{m.text}</Text>
       {m.workout && <WorkoutAttachment w={m.workout} messageId={m.id} />}
@@ -146,7 +146,7 @@ export default function Coach() {
   const { state, addChat, clearChat } = useStore();
   const now = useNow();
   const rec = useRecommendation(now);
-  const [apiKey, setKey] = useState<string | null>(null);
+  const [ai, setAi] = useState<AiConfig | null>(null);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -154,7 +154,7 @@ export default function Coach() {
 
   useFocusEffect(
     useCallback(() => {
-      getApiKey().then(setKey);
+      getAiConfig().then(setAi);
     }, []),
   );
 
@@ -169,9 +169,9 @@ export default function Coach() {
     tap();
     setInput('');
     const at = Date.now();
-    addChat([{ id: newId(), role: 'user', text, at, offline: !apiKey }]);
+    addChat([{ id: newId(), role: 'user', text, at, offline: !ai }]);
 
-    if (!apiKey) {
+    if (!ai) {
       const reply = offlineReply(text, state, new Date(), at);
       addChat([{ ...reply, id: newId(), at: Date.now() }]);
       return;
@@ -179,11 +179,12 @@ export default function Coach() {
 
     setBusy(true);
     try {
-      const res = await askCoach({ apiKey, history: state.chat, message: text, context: buildContext(state, new Date()) });
+      const res = await askCoach({ apiKey: ai.key, provider: ai.provider, history: state.chat, message: text, context: buildContext(state, new Date()) });
       addChat([
         {
           id: newId(),
           role: 'assistant',
+          provider: ai.provider,
           text: res.reply,
           content: res.content,
           workout: res.workout,
@@ -208,7 +209,7 @@ export default function Coach() {
           <Row style={{ justifyContent: 'space-between' }}>
             <Text style={type.h1}>Coach</Text>
             <Row style={{ gap: space.md }}>
-              <Pill label={apiKey ? 'Claude connected' : 'Offline mode'} color={apiKey ? colors.recovery : colors.textDim} />
+              <Pill label={ai ? `${PROVIDER_NAME[ai.provider]} connected` : 'Offline mode'} color={ai ? colors.recovery : colors.textDim} />
               {state.chat.length > 0 && (
                 <Pressable
                   accessibilityLabel={confirmClear ? 'Tap again to clear chat' : 'Clear chat'}
@@ -246,12 +247,12 @@ export default function Coach() {
                 <Text style={type.h2}>{rec.headline}</Text>
                 <Text style={type.dim}>{rec.reasons[0]}</Text>
               </Card>
-              {!apiKey && (
+              {!ai && (
                 <Card style={{ gap: space.sm }}>
                   <Text style={type.body}>
-                    You’re in offline mode: Smart Coach answers on your phone. Connect Claude for open-ended coaching conversations.
+                    You’re in offline mode: Smart Coach answers on your phone. Connect an AI (Grok or Claude) in Settings for open-ended coaching.
                   </Text>
-                  <Button label="Connect Claude" icon="sparkles" variant="secondary" onPress={() => router.push('/settings')} />
+                  <Button label="Connect an AI" icon="sparkles" variant="secondary" onPress={() => router.push('/settings')} />
                 </Card>
               )}
             </>
@@ -280,7 +281,7 @@ export default function Coach() {
               value={input}
               onChangeText={setInput}
               onSubmitEditing={() => send(input)}
-              placeholder={apiKey ? 'Ask your coach anything…' : 'Ask about workouts, recipes, shopping…'}
+              placeholder={ai ? 'Ask your coach anything…' : 'Ask about workouts, recipes, shopping…'}
               placeholderTextColor={colors.textFaint}
               style={[ui.input, { flex: 1, minWidth: 0 }]}
               returnKeyType="send"

@@ -175,3 +175,76 @@ describe('askFormFeedback', () => {
     await expect(askFormFeedback({ apiKey: 'k', movementName: 'x', summary: '', imageDataUrl: 'blob:abc' })).rejects.toBeInstanceOf(CoachError);
   });
 });
+
+describe('Grok provider', () => {
+  const grokReply = (content: string, finish = 'stop') => ({
+    id: 'c1',
+    object: 'chat.completion',
+    choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: finish }],
+  });
+
+  it('sends an OpenAI-compatible request with a JSON schema and parses the reply', async () => {
+    const seen: { url?: string; init?: RequestInit }[] = [];
+    const json = JSON.stringify({ reply: 'Light day. Stretch.', workout: null, recipe: null, shopping: [] });
+    const out = await askCoach({
+      apiKey: 'xai-test',
+      provider: 'grok',
+      history: [
+        { id: '1', role: 'user', text: 'old claude q', at: 0 },
+        { id: '2', role: 'assistant', text: 'a', content: [{ type: 'text', text: '{}' }], at: 0 },
+        { id: '3', role: 'user', text: 'old grok q', at: 0 },
+        { id: '4', role: 'assistant', provider: 'grok', text: 'b', content: '{"reply":"b"}', at: 0 },
+      ],
+      message: 'What now?',
+      context: 'Sport: Soccer',
+      fetch: fakeFetch(200, grokReply(json), seen),
+    });
+    expect(seen[0].url).toBe('https://api.x.ai/v1/chat/completions');
+    const headers = new Headers(seen[0].init!.headers as HeadersInit);
+    expect(headers.get('authorization')).toBe('Bearer xai-test');
+    const body = JSON.parse(String(seen[0].init!.body));
+    expect(body.model).toBe('grok-4.7');
+    expect(body.response_format.type).toBe('json_schema');
+    expect(body.response_format.json_schema.strict).toBe(true);
+    // System prompt first; only the earlier Grok exchange is replayed.
+    expect(body.messages.map((m: { role: string }) => m.role)).toEqual(['system', 'user', 'assistant', 'user']);
+    expect(body.messages[1].content).toBe('old grok q');
+    expect(body.messages[3].content).toContain('<athlete_context>');
+    expect(out.reply).toBe('Light day. Stretch.');
+    expect(out.content).toBe(json);
+  });
+
+  it('explains an account with no credits', async () => {
+    await expect(
+      askCoach({
+        apiKey: 'xai-test',
+        provider: 'grok',
+        history: [],
+        message: 'x',
+        context: '',
+        fetch: fakeFetch(403, { code: 'permission-denied', error: "Your newly created team doesn't have any credits or licenses yet." }),
+      }),
+    ).rejects.toThrow(/no credits/);
+  });
+
+  it('sends form frames as image_url parts', async () => {
+    const seen: { url?: string; init?: RequestInit }[] = [];
+    const text = await askFormFeedback({
+      apiKey: 'xai-test',
+      provider: 'grok',
+      movementName: 'Squat',
+      summary: 'Depth: good',
+      imageDataUrl: 'data:image/jpeg;base64,QUJD',
+      fetch: fakeFetch(200, grokReply('Chest up, nice depth.'), seen),
+    });
+    expect(text).toBe('Chest up, nice depth.');
+    const body = JSON.parse(String(seen[0].init!.body));
+    expect(body.messages[1].content[0]).toEqual({ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,QUJD', detail: 'high' } });
+  });
+
+  it('reports cut-off replies', async () => {
+    await expect(
+      askCoach({ apiKey: 'k', provider: 'grok', history: [], message: 'x', context: '', fetch: fakeFetch(200, grokReply('{"rep', 'length')) }),
+    ).rejects.toThrow(/cut off/);
+  });
+});

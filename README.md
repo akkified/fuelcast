@@ -9,7 +9,7 @@ FuelCast is an iPhone app for high-school athletes that combines the three thing
 - **How you move:** **AI Form Check** films a few reps, finds 33 body points on the phone, measures your joint angles, and tells you the one thing to fix
 - **What to cook and buy:** recipes from the food you already have, and a shopping list built from your week
 
-An optional **AI Coach powered by Claude** ties it together: ask anything, and it answers with your schedule, muscle readiness and kitchen in mind. It can hand you a workout you save with one tap, a recipe, or shopping items.
+An optional **AI Coach powered by Grok or Claude** ties it together: ask anything, and it answers with your schedule, muscle readiness and kitchen in mind. It can hand you a workout you save with one tap, a recipe, or shopping items.
 
 > Built for the **2026 Georgia TSA / CTSO Rally: App Development Pitch** · Theme: **Fitness & Nutrition**
 
@@ -42,7 +42,7 @@ More than 8 million U.S. students play high-school sports. Almost none have a sp
 | *How do I run a workout?* | **Gym planner:** 56 exercises, 20 starter workouts, a custom builder, a one-tap generator, and a live logger with rest timer and automatic weight progression |
 | *What can I cook?* | **Recipes:** 20 teen-friendly recipes matched to your kitchen (ready / almost / shop), each tagged by which fuel window it fits |
 | *What do I buy?* | **Shopping list:** built from this week's schedule plus missing recipe ingredients; bought items move into your kitchen |
-| *Can I just ask someone?* | **AI Coach (Claude):** chat that knows your context and returns structured workouts, recipes and shopping items. It also works **offline** with on-device answers |
+| *Can I just ask someone?* | **AI Coach (Grok or Claude):** chat that knows your context and returns structured workouts, recipes and shopping items. It also works **offline** with on-device answers |
 | *Is it working?* | **Progress:** Fuel Score, streaks, fuel-vs-energy insight, strength days vs. youth guidelines, muscle readiness |
 
 **Easy to use:** four one-tap quick actions on Today (water, workout, form check, coach), a getting-started checklist for new athletes, a built-in "How FuelCast works" guide, and every recommendation explained in plain English.
@@ -78,7 +78,7 @@ FuelCast is built with **Expo (React Native)**, so it runs on a real iPhone thro
 3. Scan the QR code with the iPhone **Camera**. The phone and computer must be on the same Wi-Fi; on school Wi-Fi, use `npx expo start --tunnel`.
 4. Tap **Explore with a sample athlete** for two weeks of demo data, or **Get started**.
 
-**Optional: turn on the Claude AI Coach.** In **Settings → AI Coach**, paste an Anthropic API key from [console.anthropic.com](https://console.anthropic.com/settings/keys). Without a key, the Coach tab still answers the common requests on-device.
+**Optional: turn on the AI Coach.** In **Settings → AI Coach**, choose **Grok** (key from [console.x.ai](https://console.x.ai)) or **Claude** (key from [console.anthropic.com](https://console.anthropic.com/settings/keys)) and paste a key. For development builds you can instead put `EXPO_PUBLIC_XAI_API_KEY=...` in a git-ignored `.env.local` file; the app only reads it when `__DEV__` is true, so it never ships in production builds or the website. Without a key, the Coach tab still answers the common requests on-device.
 
 ## How it works
 
@@ -100,7 +100,7 @@ flowchart LR
   RD --> SC[Smart Coach ranking + generator]
   SC --> T[Train]
   L --> P[Progression]
-  AI[Claude AI Coach] -. context: schedule, readiness, kitchen .-> X[(Structured JSON: reply, workout, recipe, shopping)]
+  AI[AI Coach: Grok or Claude] -. context: schedule, readiness, kitchen .-> X[(Structured JSON: reply, workout, recipe, shopping)]
   X --> T
   X --> SH
 ```
@@ -120,7 +120,7 @@ Every rule lives in a pure TypeScript **engine** (`src/engine/`), tested with Je
 
 **Form Check** (`src/form/`) runs Google's **MediaPipe Pose Landmarker** inside a hidden WebView (an iframe on web), so pose detection happens on the phone. Only the library and model are downloaded, once. The pure-TypeScript `form.ts` engine does the grading and is unit-tested with synthetic poses; it was also checked against real photos and video.
 
-The **AI Coach** (`src/ai/`) calls the Claude Messages API (`claude-opus-5`) with **structured outputs**. The JSON schema restricts workout exercises to IDs from our library, so every AI workout can be saved and run in the planner. Details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+The **AI Coach** (`src/ai/`) calls either xAI's Grok (`grok-4.7`, chat completions) or the Claude Messages API (`claude-opus-5`), both with **structured JSON outputs**. The JSON schema restricts workout exercises to IDs from our library, so every AI workout can be saved and run in the planner. Details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 ## Tech stack
 
@@ -128,10 +128,10 @@ The **AI Coach** (`src/ai/`) calls the Claude Messages API (`claude-opus-5`) wit
 |---|---|
 | App | Expo SDK 57 · React Native 0.86 · TypeScript (strict) · Expo Router |
 | Storage | AsyncStorage (app data), iOS Keychain via expo-secure-store (API key) |
-| AI | Claude API (`claude-opus-5`), structured JSON outputs, server-side refusal fallback |
+| AI | Grok (`grok-4.7`) or Claude (`claude-opus-5`), selectable in Settings; structured JSON outputs |
 | Graphics | react-native-svg |
 | Computer vision | Google MediaPipe Pose Landmarker (on-device, WebAssembly) · react-native-webview · expo-image-picker · expo-video-thumbnails |
-| Quality | 85 Jest unit tests · GitHub Actions CI · `expo-doctor` 21/21 |
+| Quality | 89 Jest unit tests · GitHub Actions CI · `expo-doctor` 21/21 |
 
 ## Project structure
 

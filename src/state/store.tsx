@@ -5,6 +5,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import type { AiProvider } from '../ai/key';
 import { buildDemoState } from '../data/demo';
 import type { Workout } from '../data/workouts';
 import type { CheckStatus, MovementId } from '../engine/form';
@@ -31,6 +32,8 @@ export interface ChatMessage {
   workout?: Workout;
   recipe?: ChatRecipe;
   shopping?: string[];
+  /** Which AI answered (older messages without it came from Claude). */
+  provider?: AiProvider;
   /** Answered on-device (no AI key connected). */
   offline?: boolean;
   error?: boolean;

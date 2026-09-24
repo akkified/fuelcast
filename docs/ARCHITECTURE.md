@@ -190,18 +190,18 @@ It looks up the last session with weight for that exercise. If every set hit its
 - **Week plan:** it counts each window type across the next 7 days. If the kitchen has fewer than two "great fit" foods for a window type, it suggests staples that *are* great fits, with quantities ("Banana ×7: for 7 top-off snacks this week").
 - **Bought items** that match a library food move into the kitchen with one tap.
 
-### 5.10 AI Coach (Claude)
+### 5.10 AI Coach (Grok or Claude)
 
 | Piece | Design |
 |---|---|
-| Model | `claude-opus-5` via the Messages API, `effort: low` for fast chat replies |
+| Model | The athlete chooses in Settings: **Grok** `grok-4.7` via xAI's OpenAI-compatible `/v1/chat/completions` (JSON schema via `response_format`, images as `image_url` parts), or **Claude** `claude-opus-5` via the Messages API (`effort: low`). Chat history is only replayed to the provider that produced it. |
 | Transport | `fetch` to `https://api.anthropic.com/v1/messages`. The official TypeScript SDK documents that React Native is not a supported runtime, so the app sends the same request shape over REST. |
 | Output | **Structured outputs** (`output_config.format` with a JSON schema): `{ reply, workout \| null, recipe \| null, shopping[] }`. The schema's `exerciseId` is an **enum of our 56 exercise IDs**, so an AI workout always maps to real exercises and can be saved and run in the planner. |
 | Context | Each message is prefixed with an `<athlete_context>` block: sport, level, goal, equipment, the next 4 days of schedule, the next fuel window, muscle readiness, the last 5 workouts, and kitchen foods. **No name or body weight.** |
 | Safety | The system prompt encodes youth training and fueling guidance, bans calorie, weight-loss and supplement advice, and routes pain, injury or disordered-eating mentions to an athletic trainer or doctor. `stop_reason: "refusal"` is handled, and the server-side `fallbacks: "default"` option is enabled. |
 | Efficiency | The long, stable system prompt (including the exercise list) is marked `cache_control: ephemeral` for prompt caching. Only completed exchanges are replayed as history, with the assistant's content blocks sent back unchanged. |
 | Reliability | 90 s timeout, one retry on 408/409/429/5xx/529 or network failure, and friendly messages for bad keys, billing, rate limits and outages. The response's numbers are clamped (sets 1–6, reps 1–30 or 1–600 s, rest 0–300 s), and unknown exercises are dropped. |
-| Key | Entered by the athlete in Settings and stored in the iOS **Keychain** (`expo-secure-store`); never in the app-state JSON. |
+| Key | Entered by the athlete in Settings and stored in the iOS **Keychain** (`expo-secure-store`); never in the app-state JSON. Development builds can read a Grok key from git-ignored `.env.local`; the `__DEV__` guard removes it from production bundles (verified by searching the exported iOS and web bundles). |
 | Offline | Without a key, the Coach tab answers the four common intents on-device with the engines above: plan today, build a workout, cook from the kitchen, plan shopping. |
 
 ### 5.11 AI Form Check
@@ -244,7 +244,7 @@ flowchart LR
 | Check | How |
 |---|---|
 | Type safety | `tsc --noEmit` in strict mode, no `any` |
-| Logic | 85 Jest unit tests: forecast timing and collisions, Fuel Fit scoring and combo search, sweat math, insights, readiness, coach modes, workout generator, progression, recipe tags and matching, shopping suggestions, AI request/response handling (with a mocked network), form-check geometry and rules, getting-started checklist, saved-data migration |
+| Logic | 89 Jest unit tests: forecast timing and collisions, Fuel Fit scoring and combo search, sweat math, insights, readiness, coach modes, workout generator, progression, recipe tags and matching, shopping suggestions, AI request/response handling (with a mocked network), form-check geometry and rules, getting-started checklist, saved-data migration |
 | Native build | `npx expo export --platform ios` compiles the iOS bundle |
 | Dependency health | `npx expo-doctor`: 21/21 checks pass |
 | CI | GitHub Actions runs type-check and tests on every push and pull request |

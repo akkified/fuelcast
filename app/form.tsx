@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Platform, Text, View } from 'react-native';
 
 import { askFormFeedback, CoachError } from '@/ai/coach';
-import { getApiKey } from '@/ai/key';
+import { getAiConfig, PROVIDER_NAME, type AiConfig } from '@/ai/key';
 import { analyzeForm, MOVEMENT_BY_ID, MOVEMENTS, type CheckStatus, type FormReport, type MovementId } from '@/engine/form';
 import { dateKey } from '@/engine/time';
 import type { DetectedFrame, DetectorStatus, PoseDetectorHandle } from '@/form/bridge';
@@ -34,11 +34,11 @@ export default function FormCheckScreen() {
   const [report, setReport] = useState<FormReport | null>(null);
   const [frames, setFrames] = useState<DetectedFrame[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [aiConfig, setAiConfig] = useState<AiConfig | null>(null);
   const [ai, setAi] = useState<{ loading: boolean; text?: string; error?: string }>({ loading: false });
 
   useEffect(() => {
-    getApiKey().then(setApiKey);
+    getAiConfig().then(setAiConfig);
   }, []);
 
   const onStatus = useCallback((status: DetectorStatus, message?: string) => setEngine({ status, message }), []);
@@ -118,12 +118,13 @@ export default function FormCheckScreen() {
   };
 
   const askAi = async () => {
-    if (!apiKey || !report || !movement) return;
+    if (!aiConfig || !report || !movement) return;
     const frame = frames[report.keyFrame];
     setAi({ loading: true });
     try {
       const text = await askFormFeedback({
-        apiKey,
+        apiKey: aiConfig.key,
+        provider: aiConfig.provider,
         movementName: movement.name,
         summary: report.checks.map((c) => `${c.label}: ${c.status}${c.value ? ` (${c.value})` : ''}. ${c.detail}`).join('\n'),
         imageDataUrl: frame.thumb,
@@ -274,18 +275,18 @@ export default function FormCheckScreen() {
                   <>
                     <Row style={{ gap: 6 }}>
                       <Ionicons name="sparkles" size={12} color={colors.recovery} />
-                      <Text style={[type.small, { fontSize: 11 }]}>AI Coach · Claude</Text>
+                      <Text style={[type.small, { fontSize: 11 }]}>AI Coach · {aiConfig ? PROVIDER_NAME[aiConfig.provider] : ''}</Text>
                     </Row>
                     <Text style={type.body}>{ai.text}</Text>
                   </>
-                ) : apiKey ? (
+                ) : aiConfig ? (
                   <>
                     <Text style={type.dim}>Send this one frame (with the skeleton) and the measurements to the AI Coach for personal cues.</Text>
                     <Button label={ai.loading ? 'Asking the coach…' : 'Get AI Coach feedback'} icon="sparkles" variant="secondary" disabled={ai.loading} onPress={askAi} />
                     {ai.error && <Text style={[type.small, { color: colors.danger }]}>{ai.error}</Text>}
                   </>
                 ) : (
-                  <Text style={type.dim}>Connect Claude in Settings → AI Coach to get a coach’s take on this frame. The measurements above work without it.</Text>
+                  <Text style={type.dim}>Connect an AI (Grok or Claude) in Settings → AI Coach to get a coach’s take on this frame. The measurements above work without it.</Text>
                 )}
               </Card>
 

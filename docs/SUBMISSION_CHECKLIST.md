@@ -26,7 +26,7 @@
 - [ ] **Form Check demo:** film a teammate doing 2–3 squats **from the side** (whole body in frame, good light), and one "bad" rep (a quarter squat) so the video shows a fix. Run Form Check once on Wi-Fi beforehand so the pose model is downloaded.
 - [ ] Decide on the AI Coach demo: a live Claude key (ask a parent or guardian), or offline mode (use the quick prompts and adjust one narration line)
 - [ ] Do Not Disturb on, full battery, max brightness
-- [ ] Run `npm test` and confirm it still says 85 passing (the script quotes that number)
+- [ ] Run `npm test` and confirm it still says 89 passing (the script quotes that number)
 - [ ] Read the Insights number off the screen for the `[READ THE NUMBER ON SCREEN]` line
 - [ ] Check the NFHS participation figure (docs/RESEARCH.md, reference 1)
 

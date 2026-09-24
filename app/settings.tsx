@@ -2,8 +2,8 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Linking, Text, TextInput, View } from 'react-native';
 
-import { COACH_MODEL } from '@/ai/coach';
-import { getApiKey, maskKey, setApiKey } from '@/ai/key';
+import { COACH_MODEL, GROK_MODEL } from '@/ai/coach';
+import { getAiProvider, getProviderKey, maskKey, PROVIDER_NAME, setAiProvider, setProviderKey, type AiProvider, type ProviderKey } from '@/ai/key';
 import { EQUIPMENT_LABEL, type Equipment } from '@/data/exercises';
 import { GOAL_LABEL, LEVEL_LABEL, type Goal, type Level } from '@/data/workouts';
 import { formatFluid, formatWeight, LB_PER_KG, ML_PER_OZ, toKg } from '@/engine/hydration';
@@ -32,18 +32,28 @@ export default function Settings() {
     profile.weightKg ? String(Math.round((profile.units === 'imperial' ? profile.weightKg * LB_PER_KG : profile.weightKg) * 10) / 10) : '',
   );
   const [confirmReset, setConfirmReset] = useState(false);
-  const [savedKey, setSavedKey] = useState<string | null>(null);
+  const [provider, setProvider] = useState<AiProvider>('claude');
+  const [savedKey, setSavedKey] = useState<ProviderKey | null>(null);
   const [keyInput, setKeyInput] = useState('');
 
   useEffect(() => {
-    getApiKey().then(setSavedKey);
+    getAiProvider().then(setProvider);
   }, []);
+  useEffect(() => {
+    getProviderKey(provider).then(setSavedKey);
+  }, [provider]);
+
+  const chooseProvider = async (p: AiProvider) => {
+    setProvider(p);
+    setKeyInput('');
+    await setAiProvider(p);
+  };
 
   const saveKey = async () => {
     const k = keyInput.trim();
     if (!k) return;
-    await setApiKey(k);
-    setSavedKey(k);
+    await setProviderKey(provider, k);
+    setSavedKey({ key: k, source: 'saved' });
     setKeyInput('');
     success();
   };
@@ -153,34 +163,45 @@ export default function Settings() {
         />
       </Card>
 
-      <SectionHeader title="AI Coach (Claude)" />
+      <SectionHeader title="AI Coach" />
       <Card style={{ gap: space.sm }}>
         <Text style={type.dim}>
-          Smart Coach works on your phone with no setup. Connect an Anthropic API key to unlock open-ended chat with Claude ({COACH_MODEL}).
+          Smart Coach works on your phone with no setup. Connect an AI to unlock open-ended coaching chat and feedback on Form Check frames.
         </Text>
+        <Text style={type.small}>Which AI?</Text>
+        <View style={styles.chipWrap}>
+          {(['grok', 'claude'] as AiProvider[]).map((p) => (
+            <Chip key={p} label={`${PROVIDER_NAME[p]} (${p === 'grok' ? GROK_MODEL : COACH_MODEL})`} selected={provider === p} onPress={() => chooseProvider(p)} />
+          ))}
+        </View>
         <Text style={type.small}>
-          When connected, each coach message sends your question plus a short summary: sport, level, goal, equipment, the next few days of
-          your schedule, muscle readiness, recent workouts and kitchen foods. Your name and body weight are never sent. The key is stored in
-          your phone’s secure keychain. Ask a parent or guardian before connecting a paid account.
+          Each coach message sends your question plus a short summary: sport, level, goal, equipment, the next few days of your schedule,
+          muscle readiness, recent workouts and kitchen foods. Your name and body weight are never sent. Keys are stored in your phone’s
+          secure keychain. Ask a parent or guardian before connecting a paid account.
         </Text>
         {savedKey ? (
           <>
-            <Text style={[type.body, { color: colors.great }]}>✓ Connected (key {maskKey(savedKey)})</Text>
-            <Button
-              label="Disconnect"
-              variant="danger"
-              onPress={async () => {
-                await setApiKey(null);
-                setSavedKey(null);
-              }}
-            />
+            <Text style={[type.body, { color: colors.great }]}>
+              ✓ {PROVIDER_NAME[provider]} connected (key {maskKey(savedKey.key)}
+              {savedKey.source === 'dev' ? ', from .env.local in this development build' : ''})
+            </Text>
+            {savedKey.source === 'saved' && (
+              <Button
+                label="Disconnect"
+                variant="danger"
+                onPress={async () => {
+                  await setProviderKey(provider, null);
+                  setSavedKey(await getProviderKey(provider));
+                }}
+              />
+            )}
           </>
         ) : (
           <>
             <TextInput
               value={keyInput}
               onChangeText={setKeyInput}
-              placeholder="sk-ant-…"
+              placeholder={provider === 'grok' ? 'xai-…' : 'sk-ant-…'}
               placeholderTextColor={colors.textFaint}
               style={styles.input}
               autoCapitalize="none"
@@ -188,8 +209,11 @@ export default function Settings() {
               secureTextEntry
             />
             <Button label="Connect" icon="sparkles" onPress={saveKey} disabled={!keyInput.trim()} />
-            <Text style={[type.small, { color: colors.accent }]} onPress={() => Linking.openURL('https://console.anthropic.com/settings/keys')}>
-              Get a key at console.anthropic.com
+            <Text
+              style={[type.small, { color: colors.accent }]}
+              onPress={() => Linking.openURL(provider === 'grok' ? 'https://console.x.ai' : 'https://console.anthropic.com/settings/keys')}
+            >
+              Get a key at {provider === 'grok' ? 'console.x.ai' : 'console.anthropic.com'}
             </Text>
           </>
         )}
