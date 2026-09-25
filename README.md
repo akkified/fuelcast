@@ -11,6 +11,8 @@ FuelCast is an iPhone app for high-school athletes that combines the three thing
 
 An optional **AI Coach powered by Grok or Claude** ties it together: ask anything, and it answers with your schedule, muscle readiness and kitchen in mind. It can hand you a workout you save with one tap, a recipe, or shopping items.
 
+> **Team: start with [START_HERE.md](START_HERE.md).**
+
 > Built for the **2026 Georgia TSA / CTSO Rally: App Development Pitch** · Theme: **Fitness & Nutrition**
 
 <p align="center">
@@ -185,6 +187,7 @@ docs/                    Architecture, research, design, video script, checklist
 
 ## Documentation
 
+- **[START_HERE.md](START_HERE.md): team guide to run the app, record the video, and submit**
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): technical design, data flow, algorithms, AI integration
 - [docs/RESEARCH.md](docs/RESEARCH.md): the problem, the audience, and the science with citations
 - [docs/DESIGN.md](docs/DESIGN.md): UI/UX, screen flow, accessibility, ethics
