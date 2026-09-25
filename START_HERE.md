@@ -19,7 +19,7 @@ Everything the team needs to run FuelCast, record the video, and submit it.
 You need a Mac or PC with **Node.js 20+** ([nodejs.org](https://nodejs.org), the LTS download) and an iPhone with the free **Expo Go** app from the App Store. The computer and phone must be on the **same Wi-Fi**.
 
 ```bash
-git clone <this repo's URL>
+git clone https://github.com/akkified/fuelcast.git
 cd fuelcast
 npm install
 npx expo start
